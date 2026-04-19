@@ -7,21 +7,21 @@ st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
 st.title("🏆 Pool de Hockey - Vito, Joy & Mister B")
 
 # --- CONNEXION AU GOOGLE SHEET ---
-# Note: On configurera le lien secret à l'étape suivante.
-URL_SHEET = "https://docs.google.com/spreadsheets/d/1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww/export?format=csv"
-try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    df_part = conn.read(spreadsheet=URL_SHEET, worksheet="Participants")
-    df_pred = conn.read(spreadsheet=URL_SHEET, worksheet="Prédictions")
-    df_res = conn.read(spreadsheet=URL_SHEET, worksheet="Résultats")
-except:
-    st.info("🔄 En attente de la configuration finale du lien Google Sheet...")
-    st.stop()
+# Utilisation du lien de partage standard pour permettre la lecture des onglets
+URL_SHEET = "https://docs.google.com/spreadsheets/d/1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww/edit?usp=sharing"
+
+# Création de la connexion
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+# Lecture des trois onglets
+df_part = conn.read(spreadsheet=URL_SHEET, worksheet="Participants")
+df_pred = conn.read(spreadsheet=URL_SHEET, worksheet="Prédictions")
+df_res = conn.read(spreadsheet=URL_SHEET, worksheet="Résultats")
 
 # --- LOGIQUE DE CALCUL ---
 def calculer_score(nom):
     points = 0
-    p_info = df_part[df_part['Nom'] == nom].iloc[0]
+    # On récupère les infos du participant et ses prédictions
     p_preds = df_pred[df_pred['Nom'] == nom]
     
     pts_ronde = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
@@ -33,10 +33,11 @@ def calculer_score(nom):
         
         if not match_res.empty:
             res = match_res.iloc[0]
-            # Victoires de l'équipe choisie
+            # Points pour les victoires accumulées par l'équipe choisie
             vics = res['Victoires A'] if pred['Team Win'] == res['Équipe A'] else res['Victoires B']
             points += (vics * pts_ronde.get(ronde, 1))
 
+            # Bonus si la série est terminée ("Fini" == "OUI")
             if str(res['Fini']).upper() == "OUI":
                 v_reel = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
                 m_reel = int(res['Victoires A'] + res['Victoires B'])
@@ -50,10 +51,14 @@ def calculer_score(nom):
     return points
 
 # --- AFFICHAGE DU CLASSEMENT ---
+st.subheader("Classement actuel")
 scores = []
 for nom in df_part['Nom']:
     pts = calculer_score(nom)
     scores.append({"Participant": nom, "Points": pts})
 
-df_final = pd.DataFrame(scores).sort_values("Points", ascending=False)
-st.table(df_final)
+if scores:
+    df_final = pd.DataFrame(scores).sort_values("Points", ascending=False)
+    st.table(df_final)
+else:
+    st.write("Aucune donnée trouvée dans l'onglet Participants.")
