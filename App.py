@@ -16,7 +16,7 @@ st.markdown("""
     th { background-color: #1f77b4; color: white; padding: 12px; text-align: center !important; }
     td { padding: 10px; text-align: center !important; border-bottom: 1px solid #eee; }
     
-    /* Cartes de Bonus Style "Badge" */
+    /* Cartes de Bonus (Badge avec icône à gauche) */
     .bonus-card { 
         background-color: #eef6fb; 
         border: 1px solid #b6d4fe; 
@@ -25,12 +25,13 @@ st.markdown("""
         margin-bottom: 20px; 
         display: flex; 
         align-items: center; 
-        justify-content: center;
-        gap: 15px;
+        justify-content: flex-start;
+        gap: 20px;
+        min-height: 80px;
     }
-    .bonus-label { color: #084298; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; display: block; }
-    .bonus-value { font-size: 1.3rem; font-weight: bold; color: #333; }
-    .bonus-icon { font-size: 2rem; }
+    .bonus-label { color: #084298; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .bonus-value { font-size: 1.25rem; font-weight: bold; color: #333; line-height: 1.2; }
+    .bonus-icon { font-size: 2.2rem; min-width: 40px; text-align: center; }
     
     .rules-section { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 15px; }
     .stExpander { border: 1px solid #ddd !important; border-radius: 8px !important; margin-bottom: 10px !important; }
@@ -70,7 +71,6 @@ def calculer_tout(nom):
     for _, pred in p_preds.iterrows():
         serie = str(pred['Série/Équipes']).strip()
         choix = str(pred['Team Win']).strip()
-        ronde = str(pred['Ronde']).strip()
         match_res = df_res[df_res['Série/Équipes'].astype(str).str.strip() == serie]
         pts_serie, statut = 0, "❌"
         
@@ -78,7 +78,7 @@ def calculer_tout(nom):
             res = match_res.iloc[0]
             eqA, eqB = str(res['Équipe A']).strip(), str(res['Équipe B']).strip()
             vics = res['Victoires A'] if choix == eqA else (res['Victoires B'] if choix == eqB else 0)
-            pts_serie += (vics * pts_ronde.get(ronde, 1))
+            pts_serie += (vics * pts_ronde.get(str(pred['Ronde']).strip(), 1))
             
             if str(res['Fini']).upper() == "OUI":
                 v_reel = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
@@ -121,11 +121,11 @@ if 'Nom' in df_part.columns:
             st.write(pd.DataFrame(tous_details[nom]).to_html(index=False, escape=False), unsafe_allow_html=True)
             st.write("<br>", unsafe_allow_html=True)
 
-    # 3. SÉLECTIONS (CHAMPION & MVP)
+    # 3. SÉLECTIONS (CHAMPION & MVP DEPUIS L'ONGLET PARTICIPANTS)
     with st.expander("📋 Voir les sélections de chaque participant"):
         all_cols_part = df_part.columns.tolist()
-        # Recherche élargie pour le champion (Coupe, Champion, Gagnant, Vainqueur)
-        col_champ = next((c for c in all_cols_part if any(x in c.upper() for x in ["COUPE", "CHAMP", "VAINQUEUR", "GAGNANT"])), None)
+        # On cherche spécifiquement "Stanley Cup", "CUP" ou "COUPE"
+        col_champ = next((c for c in all_cols_part if any(x in c.upper() for x in ["STANLEY", "CUP", "COUPE", "CHAMP"])), None)
         col_mvp = next((c for c in all_cols_part if "MVP" in c.upper()), None)
 
         for nom in participants:
@@ -139,7 +139,7 @@ if 'Nom' in df_part.columns:
                     ca.markdown(f'''
                         <div class="bonus-card">
                             <span class="bonus-icon">🏆</span>
-                            <div style="text-align: left;">
+                            <div>
                                 <span class="bonus-label">Champion Choisi</span>
                                 <span class="bonus-value">{val}</span>
                             </div>
@@ -150,20 +150,8 @@ if 'Nom' in df_part.columns:
                     cb.markdown(f'''
                         <div class="bonus-card">
                             <span class="bonus-icon">🎖️</span>
-                            <div style="text-align: left;">
+                            <div>
                                 <span class="bonus-label">MVP Choisi</span>
                                 <span class="bonus-value">{val}</span>
                             </div>
                         </div>
-                    ''', unsafe_allow_html=True)
-            
-            p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
-            match_data = p_preds[p_preds['Série/Équipes'].notna()]
-            if not match_data.empty:
-                cols_to_show = [c for c in ['Ronde', 'Série/Équipes', 'Team Win', '#Match'] if c in match_data.columns]
-                st.write(match_data[cols_to_show].to_html(index=False), unsafe_allow_html=True)
-            st.write("<hr>", unsafe_allow_html=True)
-
-    # 4. RÈGLEMENT
-    with st.expander("📜 Règlement officiel"):
-        st.markdown('<div class="rules-section"><h4>1. Structure</h4><p>Format éliminatoire. Choix Coupe et MVP fixes au départ.</p></div>', unsafe_allow_html=True)
