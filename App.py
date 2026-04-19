@@ -155,3 +155,15 @@ if 'Nom' in df_part.columns:
                                 <span class="bonus-value">{val}</span>
                             </div>
                         </div>
+                    ''', unsafe_allow_html=True)
+            
+            p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
+            match_data = p_preds[p_preds['Série/Équipes'].notna()]
+            if not match_data.empty:
+                cols_to_show = [c for c in ['Ronde', 'Série/Équipes', 'Team Win', '#Match'] if c in match_data.columns]
+                st.write(match_data[cols_to_show].to_html(index=False), unsafe_allow_html=True)
+            st.write("<hr>", unsafe_allow_html=True)
+
+    # 4. RÈGLEMENT
+    with st.expander("📜 Règlement officiel"):
+        st.markdown('<div class="rules-section"><h4>1. Structure</h4><p>Format éliminatoire. Choix Coupe et MVP fixes au départ.</p></div>', unsafe_allow_html=True)
