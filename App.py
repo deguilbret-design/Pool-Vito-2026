@@ -9,7 +9,6 @@ st.title("🏆 Pool de Hockey - Vito, Joy & Mister B")
 # --- CONNEXION AU GOOGLE SHEET ---
 # Note: On configurera le lien secret à l'étape suivante.
 URL_SHEET = "https://docs.google.com/spreadsheets/d/1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww/export?format=csv"
-
 try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df_part = conn.read(spreadsheet=URL_SHEET, worksheet="Participants")
