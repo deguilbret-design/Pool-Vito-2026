@@ -2,20 +2,43 @@ import streamlit as st
 import pandas as pd
 import urllib.parse
 
-# 1. CONFIGURATION & STYLE
+# 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
 
-# CSS pour un look épuré et centré
+# 2. LE STYLE CSS (Pour un centrage parfait)
 st.markdown("""
     <style>
-    .main { text-align: center; }
-    div[data-testid="stExpander"] { width: 80%; margin: 0 auto; }
-    /* Style pour le titre principal */
-    .titre { color: #1f77b4; font-size: 2.5rem; font-weight: bold; margin-bottom: 20px; }
+    .main-title { text-align: center; color: #1f77b4; font-size: 2.5rem; font-weight: bold; margin-bottom: 30px; }
+    .classement-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    table {
+        width: 60%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    }
+    th {
+        background-color: #1f77b4;
+        color: white;
+        padding: 12px;
+        text-align: center !important; /* FORCE LE CENTRAGE */
+        font-size: 1.2rem;
+    }
+    td {
+        padding: 10px;
+        text-align: center !important; /* FORCE LE CENTRAGE */
+        border-bottom: 1px solid #ddd;
+        font-size: 1.1rem;
+    }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9f5ff; }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="titre">🏆 Pool de Hockey - Vito, Joy & Mister B</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🏆 Pool de Hockey - Vito, Joy & Mister B</div>', unsafe_allow_html=True)
 
 # --- CONNEXION ---
 SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
@@ -75,8 +98,7 @@ def calculer_score_details(nom):
             
     return int(points), details
 
-# --- AFFICHAGE DU CLASSEMENT ---
-st.write("---")
+# --- AFFICHAGE ---
 st.markdown("<h3 style='text-align: center;'>📊 Classement en direct</h3>", unsafe_allow_html=True)
 
 if 'Nom' in df_part.columns:
@@ -90,20 +112,16 @@ if 'Nom' in df_part.columns:
 
     if scores:
         df_final = pd.DataFrame(scores).sort_values("Points", ascending=False)
-        # On crée le rang proprement
         df_final.insert(0, "Rang", range(1, len(df_final) + 1))
         
-        # Colonnes centrées pour le tableau final
-        # Utilisation de st.dataframe avec hide_index=True pour éliminer la colonne de gauche
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.dataframe(
-                df_final, 
-                hide_index=True, 
-                use_container_width=True
-            )
+        # TRANSFORMATION EN HTML (Pour supprimer l'index et centrer)
+        # index=False supprime la colonne indésirable
+        html_table = df_final.to_html(index=False, classes='classement-table')
         
-        st.write("---")
+        # Affichage du tableau centré
+        st.markdown(f'<div class="classement-container">{html_table}</div>', unsafe_allow_html=True)
+        
+        st.write("<br>", unsafe_allow_html=True)
         with st.expander("🔍 Pourquoi ce score ? (Détails par participant)"):
             for nom, logs in tous_les_details.items():
                 st.markdown(f"**{nom}** : {', '.join(logs)}")
