@@ -16,10 +16,21 @@ st.markdown("""
     th { background-color: #1f77b4; color: white; padding: 12px; text-align: center !important; }
     td { padding: 10px; text-align: center !important; border-bottom: 1px solid #eee; }
     
-    /* Cartes de Bonus (Champion/MVP) */
-    .bonus-card { background-color: #eef6fb; border: 1px solid #b6d4fe; border-radius: 8px; padding: 15px; margin-bottom: 20px; text-align: center; }
-    .bonus-title { color: #084298; font-weight: bold; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 5px; }
-    .bonus-value { font-size: 1.2rem; font-weight: bold; color: #333; }
+    /* Cartes de Bonus Style "Badge" */
+    .bonus-card { 
+        background-color: #eef6fb; 
+        border: 1px solid #b6d4fe; 
+        border-radius: 10px; 
+        padding: 15px; 
+        margin-bottom: 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        gap: 15px;
+    }
+    .bonus-label { color: #084298; font-weight: bold; font-size: 0.8rem; text-transform: uppercase; display: block; }
+    .bonus-value { font-size: 1.3rem; font-weight: bold; color: #333; }
+    .bonus-icon { font-size: 2rem; }
     
     .rules-section { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 15px; }
     .stExpander { border: 1px solid #ddd !important; border-radius: 8px !important; margin-bottom: 10px !important; }
@@ -42,8 +53,6 @@ try:
     df_part = load_data("Participants")
     df_pred = load_data("Prédictions")
     df_res = load_data("Résultats")
-    
-    # Nettoyage des points
     df_res['Victoires A'] = pd.to_numeric(df_res['Victoires A'], errors='coerce').fillna(0)
     df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'], errors='coerce').fillna(0)
 except Exception as e:
@@ -112,29 +121,42 @@ if 'Nom' in df_part.columns:
             st.write(pd.DataFrame(tous_details[nom]).to_html(index=False, escape=False), unsafe_allow_html=True)
             st.write("<br>", unsafe_allow_html=True)
 
-    # 3. SÉLECTIONS (CHAMPION & MVP DEPUIS L'ONGLET PARTICIPANTS)
+    # 3. SÉLECTIONS (CHAMPION & MVP)
     with st.expander("📋 Voir les sélections de chaque participant"):
-        # Identification des colonnes dans l'onglet PARTICIPANTS
         all_cols_part = df_part.columns.tolist()
-        col_champ = next((c for c in all_cols_part if "COUPE" in c.upper() or "CHAMP" in c.upper()), None)
+        # Recherche élargie pour le champion (Coupe, Champion, Gagnant, Vainqueur)
+        col_champ = next((c for c in all_cols_part if any(x in c.upper() for x in ["COUPE", "CHAMP", "VAINQUEUR", "GAGNANT"])), None)
         col_mvp = next((c for c in all_cols_part if "MVP" in c.upper()), None)
 
         for nom in participants:
             st.markdown(f"### Prédictions de **{nom}**")
-            
-            # Récupération des choix fixes dans df_part
             user_row = df_part[df_part['Nom'].astype(str).str.strip() == str(nom).strip()]
             
             if not user_row.empty:
                 ca, cb = st.columns(2)
                 if col_champ:
                     val = user_row[col_champ].iloc[0]
-                    ca.markdown(f'<div class="bonus-card"><div class="bonus-title">🏆 Champion choisi</div><div class="bonus-value">{val}</div></div>', unsafe_allow_html=True)
+                    ca.markdown(f'''
+                        <div class="bonus-card">
+                            <span class="bonus-icon">🏆</span>
+                            <div style="text-align: left;">
+                                <span class="bonus-label">Champion Choisi</span>
+                                <span class="bonus-value">{val}</span>
+                            </div>
+                        </div>
+                    ''', unsafe_allow_html=True)
                 if col_mvp:
                     val = user_row[col_mvp].iloc[0]
-                    cb.markdown(f'<div class="bonus-card"><div class="bonus-title">🎖️ MVP choisi</div><div class="bonus-value">{val}</div></div>', unsafe_allow_html=True)
+                    cb.markdown(f'''
+                        <div class="bonus-card">
+                            <span class="bonus-icon">🎖️</span>
+                            <div style="text-align: left;">
+                                <span class="bonus-label">MVP Choisi</span>
+                                <span class="bonus-value">{val}</span>
+                            </div>
+                        </div>
+                    ''', unsafe_allow_html=True)
             
-            # Affichage du tableau des séries (depuis l'onglet Prédictions)
             p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
             match_data = p_preds[p_preds['Série/Équipes'].notna()]
             if not match_data.empty:
@@ -145,4 +167,3 @@ if 'Nom' in df_part.columns:
     # 4. RÈGLEMENT
     with st.expander("📜 Règlement officiel"):
         st.markdown('<div class="rules-section"><h4>1. Structure</h4><p>Format éliminatoire. Choix Coupe et MVP fixes au départ.</p></div>', unsafe_allow_html=True)
-        # ... Reste du règlement inchangé
