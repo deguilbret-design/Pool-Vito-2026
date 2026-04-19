@@ -2,38 +2,20 @@ import streamlit as st
 import pandas as pd
 import urllib.parse
 
-# 1. CONFIGURATION & STYLE (C'est ici qu'on règle le visuel)
+# 1. CONFIGURATION & STYLE
 st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
 
-# Ce bloc CSS force le centrage de tout le tableau
+# CSS pour un look épuré et centré
 st.markdown("""
     <style>
-    /* Centrer le titre */
-    h1 { text-align: center; }
-    
-    /* Centrer tout le contenu des tableaux */
-    [data-testid="stTable"] {
-        margin-left: auto;
-        margin-right: auto;
-        width: 60% !important; /* On réduit la largeur pour que ce soit moins étiré */
-    }
-    table {
-        margin-left: auto;
-        margin-right: auto;
-    }
-    th {
-        text-align: center !important;
-        background-color: #1f77b4 !important; /* Un bleu pro pour l'en-tête */
-        color: white !important;
-    }
-    td {
-        text-align: center !important;
-        font-size: 1.1rem;
-    }
+    .main { text-align: center; }
+    div[data-testid="stExpander"] { width: 80%; margin: 0 auto; }
+    /* Style pour le titre principal */
+    .titre { color: #1f77b4; font-size: 2.5rem; font-weight: bold; margin-bottom: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏆 Pool de Hockey - Vito, Joy & Mister B")
+st.markdown('<div class="titre">🏆 Pool de Hockey - Vito, Joy & Mister B</div>', unsafe_allow_html=True)
 
 # --- CONNEXION ---
 SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
@@ -95,7 +77,7 @@ def calculer_score_details(nom):
 
 # --- AFFICHAGE DU CLASSEMENT ---
 st.write("---")
-st.markdown("<h3 style='text-align: center;'>Classement en direct</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center;'>📊 Classement en direct</h3>", unsafe_allow_html=True)
 
 if 'Nom' in df_part.columns:
     scores = []
@@ -108,13 +90,20 @@ if 'Nom' in df_part.columns:
 
     if scores:
         df_final = pd.DataFrame(scores).sort_values("Points", ascending=False)
+        # On crée le rang proprement
         df_final.insert(0, "Rang", range(1, len(df_final) + 1))
         
-        # Pour forcer le centrage visuel, on affiche le tableau
-        st.table(df_final)
+        # Colonnes centrées pour le tableau final
+        # Utilisation de st.dataframe avec hide_index=True pour éliminer la colonne de gauche
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.dataframe(
+                df_final, 
+                hide_index=True, 
+                use_container_width=True
+            )
         
         st.write("---")
-        with st.expander("🔍 Voir le détail des points"):
+        with st.expander("🔍 Pourquoi ce score ? (Détails par participant)"):
             for nom, logs in tous_les_details.items():
-                st.write(f"**{nom} :**")
-                st.write(", ".join(logs))
+                st.markdown(f"**{nom}** : {', '.join(logs)}")
