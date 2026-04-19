@@ -3,7 +3,7 @@ import pandas as pd
 import urllib.parse
 
 # 1. CONFIGURATION ET STYLE
-st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
+st.set_page_config(page_title="Pool de Hockey 2026", layout="wide")
 
 st.markdown("""
     <style>
@@ -25,7 +25,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🏆 Pool de Hockey - Vito, Joy & Mister B</div>', unsafe_allow_html=True)
+# NOUVEAU TITRE GÉNÉRIQUE
+st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
 # --- CONNEXION DONNÉES ---
 SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
@@ -120,8 +121,8 @@ if 'Nom' in df_part.columns:
             st.write(preds_nom[cols_show].to_html(index=False), unsafe_allow_html=True)
             st.write("<br>", unsafe_allow_html=True)
 
-    # 4. RÈGLEMENT OFFICIEL
-    with st.expander("📜 Règlement officiel - Vito's Super Hockey Pool 2026"):
+    # 4. RÈGLEMENT OFFICIEL (MIS À JOUR)
+    with st.expander("📜 Règlement officiel - Pool de Hockey 2026"):
         st.markdown("""
         <div class="rules-section">
             <h4>1. Structure du Pool</h4>
