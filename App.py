@@ -2,9 +2,40 @@ import streamlit as st
 import pandas as pd
 import urllib.parse
 
+# 1. CONFIGURATION & STYLE (C'est ici qu'on règle le visuel)
 st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
+
+# Ce bloc CSS force le centrage de tout le tableau
+st.markdown("""
+    <style>
+    /* Centrer le titre */
+    h1 { text-align: center; }
+    
+    /* Centrer tout le contenu des tableaux */
+    [data-testid="stTable"] {
+        margin-left: auto;
+        margin-right: auto;
+        width: 60% !important; /* On réduit la largeur pour que ce soit moins étiré */
+    }
+    table {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    th {
+        text-align: center !important;
+        background-color: #1f77b4 !important; /* Un bleu pro pour l'en-tête */
+        color: white !important;
+    }
+    td {
+        text-align: center !important;
+        font-size: 1.1rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("🏆 Pool de Hockey - Vito, Joy & Mister B")
 
+# --- CONNEXION ---
 SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 
 def load_data(sheet_name):
@@ -18,14 +49,13 @@ try:
     df_part = load_data("Participants")
     df_pred = load_data("Prédictions")
     df_res = load_data("Résultats")
-    
-    # SÉCURITÉ : On transforme les cases vides en 0 pour les colonnes de points
     df_res['Victoires A'] = pd.to_numeric(df_res['Victoires A'], errors='coerce').fillna(0)
     df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'], errors='coerce').fillna(0)
 except Exception as e:
     st.error(f"Erreur de lecture : {e}")
     st.stop()
 
+# --- LOGIQUE DE CALCUL ---
 def calculer_score_details(nom):
     points = 0
     details = []
@@ -42,12 +72,10 @@ def calculer_score_details(nom):
             res = match_res.iloc[0]
             eqA = str(res['Équipe A']).strip()
             eqB = str(res['Équipe B']).strip()
-            
             vics = res['Victoires A'] if choix == eqA else (res['Victoires B'] if choix == eqB else 0)
             pts_match = vics * pts_ronde.get(str(pred['Ronde']).strip(), 1)
             points += pts_match
             
-            # Bonus de fin de série
             if str(res['Fini']).upper() == "OUI":
                 v_reel = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
                 m_reel = int(res['Victoires A'] + res['Victoires B'])
@@ -59,19 +87,20 @@ def calculer_score_details(nom):
                     except: pass
                 elif str(pred['#Match']) == "7" and m_reel == 7:
                     points += 1
-            
             details.append(f"✅ {serie} : {choix} ({int(vics)} vics) -> {int(pts_match)} pts")
         else:
             details.append(f"❌ {serie} : Match non trouvé")
             
     return int(points), details
 
-# --- AFFICHAGE ---
-st.subheader("Classement en direct")
-scores = []
-tous_les_details = {}
+# --- AFFICHAGE DU CLASSEMENT ---
+st.write("---")
+st.markdown("<h3 style='text-align: center;'>Classement en direct</h3>", unsafe_allow_html=True)
 
 if 'Nom' in df_part.columns:
+    scores = []
+    tous_les_details = {}
+
     for nom in df_part['Nom'].dropna().unique():
         pts, info = calculer_score_details(nom)
         scores.append({"Participant": nom, "Points": pts})
@@ -80,8 +109,12 @@ if 'Nom' in df_part.columns:
     if scores:
         df_final = pd.DataFrame(scores).sort_values("Points", ascending=False)
         df_final.insert(0, "Rang", range(1, len(df_final) + 1))
+        
+        # Pour forcer le centrage visuel, on affiche le tableau
         st.table(df_final)
         
+        st.write("---")
         with st.expander("🔍 Voir le détail des points"):
             for nom, logs in tous_les_details.items():
-                st.write(f"**{nom} :** {', '.join(logs)}")
+                st.write(f"**{nom} :**")
+                st.write(", ".join(logs))
