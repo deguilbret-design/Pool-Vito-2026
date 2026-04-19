@@ -17,15 +17,15 @@ st.markdown("""
     td { padding: 10px; text-align: center !important; border-bottom: 1px solid #eee; }
     tr:hover { background-color: #f9f9f9; }
     
-    /* Style spécifique pour le règlement */
-    .rules-table th { background-color: #444; }
-    .rules-section { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 15px; }
+    /* Style pour les choix fixes (Champion/MVP) */
+    .bonus-card { background-color: #eef6fb; border: 1px solid #b6d4fe; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .bonus-title { color: #084298; font-weight: bold; font-size: 1rem; }
     
+    .rules-section { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 15px; }
     .stExpander { border: 1px solid #ddd !important; border-radius: 8px !important; margin-bottom: 10px !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# NOUVEAU TITRE GÉNÉRIQUE
 st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
 # --- CONNEXION DONNÉES ---
@@ -56,7 +56,10 @@ def calculer_tout(nom):
     pts_ronde = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
     bonus_matchs_dict = {4: 4, 5: 3, 6: 2, 7: 1}
 
-    for _, pred in p_preds.iterrows():
+    # On ne traite que les lignes qui ont une "Série/Équipes" (on ignore les lignes de bonus fixes ici)
+    match_preds = p_preds[p_preds['Série/Équipes'].notna()]
+
+    for _, pred in match_preds.iterrows():
         serie = str(pred['Série/Équipes']).strip()
         choix = str(pred['Team Win']).strip()
         ronde = str(pred['Ronde']).strip()
@@ -82,6 +85,10 @@ def calculer_tout(nom):
             total_points += pts_serie
 
         liste_details.append({"Statut": statut, "Série": serie, "Choix": choix, "Points": int(pts_serie)})
+    
+    # Note: Les points MVP et Champion seront ajoutés manuellement dans l'onglet Résultats 
+    # ou calculés plus tard quand la finale sera terminée.
+    
     return int(total_points), liste_details
 
 # --- AFFICHAGE ---
@@ -112,16 +119,38 @@ if 'Nom' in df_part.columns:
             st.write(pd.DataFrame(tous_details[nom]).to_html(index=False, escape=False), unsafe_allow_html=True)
             st.write("<br>", unsafe_allow_html=True)
 
-    # 3. PRÉDICTIONS INITIALES
+    # 3. PRÉDICTIONS INITIALES (MAINTENANT AVEC CHAMPION & MVP)
     with st.expander("📋 Voir les sélections de chaque participant"):
         for nom in participants:
             st.subheader(f"Prédictions de {nom}")
-            preds_nom = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
+            
+            # Récupération des données du participant
+            p_data = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
+            
+            # Affichage des choix fixes (Champion et MVP)
+            # On cherche ces colonnes si elles existent dans ton Excel
+            col_champ = "Gagnant Coupe" if "Gagnant Coupe" in p_data.columns else None
+            col_mvp = "MVP" if "MVP" in p_data.columns else None
+            
+            if col_champ or col_mvp:
+                c_a, c_b = st.columns(2)
+                if col_champ:
+                    val_champ = p_data[col_champ].dropna().unique()
+                    if len(val_champ) > 0:
+                        c_a.markdown(f'<div class="bonus-card"><span class="bonus-title">🏆 Champion choisi :</span><br>{val_champ[0]}</div>', unsafe_allow_html=True)
+                if col_mvp:
+                    val_mvp = p_data[col_mvp].dropna().unique()
+                    if len(val_mvp) > 0:
+                        c_b.markdown(f'<div class="bonus-card"><span class="bonus-title">🎖️ MVP choisi :</span><br>{val_mvp[0]}</div>', unsafe_allow_html=True)
+            
+            # Affichage du tableau des séries
             cols_show = ['Ronde', 'Série/Équipes', 'Team Win', '#Match']
-            st.write(preds_nom[cols_show].to_html(index=False), unsafe_allow_html=True)
+            match_data = p_data[p_data['Série/Équipes'].notna()]
+            if not match_data.empty:
+                st.write(match_data[cols_show].to_html(index=False), unsafe_allow_html=True)
             st.write("<br>", unsafe_allow_html=True)
 
-    # 4. RÈGLEMENT OFFICIEL (MIS À JOUR)
+    # 4. RÈGLEMENT OFFICIEL
     with st.expander("📜 Règlement officiel - Pool de Hockey 2026"):
         st.markdown("""
         <div class="rules-section">
