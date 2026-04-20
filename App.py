@@ -10,13 +10,14 @@ st.markdown("""
     .main-title { text-align: center; color: #1f77b4; font-size: 2.2rem; font-weight: bold; margin-bottom: 20px; }
     .sub-title { text-align: center; color: #333; margin-top: 20px; font-weight: bold; }
     
-    /* Tableaux */
+    /* Style pour les Tableaux */
     .classement-container { display: flex; justify-content: center; margin-bottom: 30px; }
     table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; font-family: sans-serif; }
     th { background-color: #1f77b4; color: white; padding: 12px; text-align: center !important; }
     td { padding: 10px; text-align: center !important; border-bottom: 1px solid #eee; }
+    tr:hover { background-color: #f9f9f9; }
     
-    /* Cartes de Bonus (Badge avec icône à gauche) */
+    /* Cartes de Bonus (Champion/MVP) */
     .bonus-card { 
         background-color: #eef6fb; 
         border: 1px solid #b6d4fe; 
@@ -33,7 +34,12 @@ st.markdown("""
     .bonus-value { font-size: 1.25rem; font-weight: bold; color: #333; line-height: 1.2; }
     .bonus-icon { font-size: 2.2rem; min-width: 40px; text-align: center; }
     
-    .rules-section { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 15px; }
+    /* Section Règlement */
+    .rules-section { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 20px; }
+    .rules-section h4 { color: #1f77b4; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+    .rules-table { width: auto !important; margin: 10px 0; }
+    .rules-table th { background-color: #444 !important; font-size: 0.9rem; padding: 8px; }
+    
     .stExpander { border: 1px solid #ddd !important; border-radius: 8px !important; margin-bottom: 10px !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -57,7 +63,7 @@ try:
     df_res['Victoires A'] = pd.to_numeric(df_res['Victoires A'], errors='coerce').fillna(0)
     df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'], errors='coerce').fillna(0)
 except Exception as e:
-    st.error(f"Erreur de lecture : {e}")
+    st.error(f"Erreur de lecture des données : {e}")
     st.stop()
 
 # --- LOGIQUE DE CALCUL ---
@@ -71,6 +77,7 @@ def calculer_tout(nom):
     for _, pred in p_preds.iterrows():
         serie = str(pred['Série/Équipes']).strip()
         choix = str(pred['Team Win']).strip()
+        ronde = str(pred['Ronde']).strip()
         match_res = df_res[df_res['Série/Équipes'].astype(str).str.strip() == serie]
         pts_serie, statut = 0, "❌"
         
@@ -78,7 +85,7 @@ def calculer_tout(nom):
             res = match_res.iloc[0]
             eqA, eqB = str(res['Équipe A']).strip(), str(res['Équipe B']).strip()
             vics = res['Victoires A'] if choix == eqA else (res['Victoires B'] if choix == eqB else 0)
-            pts_serie += (vics * pts_ronde.get(str(pred['Ronde']).strip(), 1))
+            pts_serie += (vics * pts_ronde.get(ronde, 1))
             
             if str(res['Fini']).upper() == "OUI":
                 v_reel = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
@@ -91,6 +98,7 @@ def calculer_tout(nom):
                     pts_serie += 1
             if pts_serie > 0: statut = "✅"
             total_points += pts_serie
+
         liste_details.append({"Statut": statut, "Série": serie, "Choix": choix, "Points": int(pts_serie)})
     return int(total_points), liste_details
 
@@ -121,41 +129,23 @@ if 'Nom' in df_part.columns:
             st.write(pd.DataFrame(tous_details[nom]).to_html(index=False, escape=False), unsafe_allow_html=True)
             st.write("<br>", unsafe_allow_html=True)
 
-    # 3. SÉLECTIONS (CHAMPION & MVP DEPUIS L'ONGLET PARTICIPANTS)
+    # 3. SÉLECTIONS (CHAMPION & MVP)
     with st.expander("📋 Voir les sélections de chaque participant"):
         all_cols_part = df_part.columns.tolist()
-        # On cherche spécifiquement "Stanley Cup", "CUP" ou "COUPE"
         col_champ = next((c for c in all_cols_part if any(x in c.upper() for x in ["STANLEY", "CUP", "COUPE", "CHAMP"])), None)
         col_mvp = next((c for c in all_cols_part if "MVP" in c.upper()), None)
 
         for nom in participants:
             st.markdown(f"### Prédictions de **{nom}**")
             user_row = df_part[df_part['Nom'].astype(str).str.strip() == str(nom).strip()]
-            
             if not user_row.empty:
                 ca, cb = st.columns(2)
                 if col_champ:
                     val = user_row[col_champ].iloc[0]
-                    ca.markdown(f'''
-                        <div class="bonus-card">
-                            <span class="bonus-icon">🏆</span>
-                            <div>
-                                <span class="bonus-label">Champion Choisi</span>
-                                <span class="bonus-value">{val}</span>
-                            </div>
-                        </div>
-                    ''', unsafe_allow_html=True)
+                    ca.markdown(f'<div class="bonus-card"><span class="bonus-icon">🏆</span><div><span class="bonus-label">Champion Choisi</span><span class="bonus-value">{val}</span></div></div>', unsafe_allow_html=True)
                 if col_mvp:
                     val = user_row[col_mvp].iloc[0]
-                    cb.markdown(f'''
-                        <div class="bonus-card">
-                            <span class="bonus-icon">🎖️</span>
-                            <div>
-                                <span class="bonus-label">MVP Choisi</span>
-                                <span class="bonus-value">{val}</span>
-                            </div>
-                        </div>
-                    ''', unsafe_allow_html=True)
+                    cb.markdown(f'<div class="bonus-card"><span class="bonus-icon">🎖️</span><div><span class="bonus-label">MVP Choisi</span><span class="bonus-value">{val}</span></div></div>', unsafe_allow_html=True)
             
             p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
             match_data = p_preds[p_preds['Série/Équipes'].notna()]
@@ -164,6 +154,59 @@ if 'Nom' in df_part.columns:
                 st.write(match_data[cols_to_show].to_html(index=False), unsafe_allow_html=True)
             st.write("<hr>", unsafe_allow_html=True)
 
-    # 4. RÈGLEMENT
-    with st.expander("📜 Règlement officiel"):
-        st.markdown('<div class="rules-section"><h4>1. Structure</h4><p>Format éliminatoire. Choix Coupe et MVP fixes au départ.</p></div>', unsafe_allow_html=True)
+    # 4. RÈGLEMENT COMPLET
+    with st.expander("📜 Règlement officiel - Pool de Hockey 2026"):
+        st.markdown("""
+        <div class="rules-section">
+            <h4>1. Structure du Pool</h4>
+            <ul>
+                <li><b>Nombre de participants :</b> 3 au départ (avec possibilité d'expansion).</li>
+                <li><b>Format :</b> Éliminatoire (1/8, 1/4, 1/2 et Finale).</li>
+                <li><b>Prise de décision :</b>
+                    <ul>
+                        <li><b>Choix Initiaux (Fixes) :</b> Gagnant de la Coupe Stanley et Joueur MVP (Conn Smythe).</li>
+                        <li><b>Choix par Ronde :</b> Avant chaque ronde, prédiction du vainqueur de chaque série et du nombre de matchs (4 à 7).</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="rules-section">
+            <h4>2. Système de Pointage des Matchs</h4>
+            <p>Le nombre de points accordés pour chaque victoire de l'équipe sélectionnée augmente à chaque ronde :</p>
+            <table class="rules-table">
+                <tr><th>Ronde</th><th>Points / Victoire</th><th>Bonus Gagnant Série</th></tr>
+                <tr><td>1/8 de finale</td><td>1 pt</td><td>+2 pts</td></tr>
+                <tr><td>1/4 de finale</td><td>2 pts</td><td>+2 pts</td></tr>
+                <tr><td>1/2 finale</td><td>3 pts</td><td>+2 pts</td></tr>
+                <tr><td>Finale</td><td>4 pts</td><td>+2 pts</td></tr>
+            </table>
+        </div>
+
+        <div class="rules-section">
+            <h4>3. Bonus de Précision (Nombre de matchs)</h4>
+            <p>Si tu prédis le bon nombre de matchs ET que ton équipe gagne :</p>
+            <ul>
+                <li><b>En 4 matchs :</b> +4 pts bonis</li>
+                <li><b>En 5 matchs :</b> +3 pts bonis</li>
+                <li><b>En 6 matchs :</b> +2 pts bonis</li>
+                <li><b>En 7 matchs :</b> +1 pt boni</li>
+            </ul>
+            <p><i><b>L'exception "Match 7" :</b> Tu reçois le 1 pt boni si la série se rend en 7 matchs, même si l'équipe que tu avais choisie finit par perdre la série.</i></p>
+        </div>
+
+        <div class="rules-section">
+            <h4>4. Bonus de Performance Globale</h4>
+            <ul>
+                <li><b>Parcours de ton Champion (max 10 pts) :</b>
+                    <ul>
+                        <li>Passe la ronde 1 : +2 pts</li>
+                        <li>Passe la ronde 2 : +2 pts</li>
+                        <li>Passe la ronde 3 : +2 pts</li>
+                        <li>Remporte la finale : +4 pts</li>
+                    </ul>
+                </li>
+                <li><b>Trophée MVP :</b> +10 pts si ton choix initial remporte le titre de joueur le plus utile des séries.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
