@@ -3,10 +3,10 @@ import pandas as pd
 import urllib.parse
 import requests
 
-# 1. CONFIGURATION
+# 1. CONFIG
 st.set_page_config(page_title="Vito's Super Hockey Pool 2026", layout="wide")
 
-# 2. STYLE CSS (LIGNES COURTES)
+# 2. CSS (LIGNES COURTES ET SÉCURISÉES)
 st.markdown("<style>", unsafe_allow_html=True)
 st.markdown(".nhl-ticker-wrap { width: 100%; overflow: hidden; background: #0b0f19; border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px; padding: 10px 0; }", unsafe_allow_html=True)
 st.markdown(".ticker { display: inline-flex; width: max-content; animation: tk 15s linear infinite; }", unsafe_allow_html=True)
@@ -48,7 +48,7 @@ def get_scores():
 st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_scores()}</div></div>', unsafe_allow_html=True)
 st.markdown('<h2 style="text-align:center;color:#1f77b4;margin-top:20px;">🏆 Vito\'s Super Hockey Pool 2026</h2>', unsafe_allow_html=True)
 
-# 4. DONNÉES
+# 4. DATA
 SID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 def load(sn):
     u = f"https://docs.google.com/spreadsheets/d/{SID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
@@ -57,7 +57,7 @@ def load(sn):
 try:
     df_p, df_pr, df_res = load("Participants"), load("Prédictions"), load("Résultats")
     df_res['Victoires A'] = pd.to_numeric(df_res['Victoires A'], errors='coerce').fillna(0)
-    df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'].fillna(0), errors='coerce').fillna(0)
+    df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'], errors='coerce').fillna(0)
 except Exception as e: 
     st.error(f"Erreur : {e}"); st.stop()
 
@@ -105,10 +105,19 @@ if 'Nom' in df_p.columns:
             st.subheader(u); st.write(pd.DataFrame(det[u]).to_html(index=False), unsafe_allow_html=True)
 
     with st.expander("📋 Sélections"):
+        ac = df_p.columns.tolist()
+        cc = next((c for c in ac if any(x in c.upper() for x in ["STANLEY", "CUP", "COUPE"])), None)
+        cm = next((c for c in ac if "MVP" in c.upper()), None)
         for u in users:
             st.markdown(f"#### **{u}**")
+            r = df_p[df_p['Nom'].astype(str).str.strip() == str(u).strip()]
+            if not r.empty:
+                c1, c2 = st.columns(2)
+                if cc: c1.markdown(f'<div class="bonus-card">🏆 <div><div class="bonus-label">Coupe</div><div class="bonus-value">{r[cc].iloc[0]}</div></div></div>', unsafe_allow_html=True)
+                if cm: c2.markdown(f'<div class="bonus-card">🎖️ <div><div class="bonus-label">MVP</div><div class="bonus-value">{r[cm].iloc[0]}</div></div></div>', unsafe_allow_html=True)
             p_s = df_pr[df_pr['Nom'].astype(str).str.strip() == str(u).strip()]
             if not p_s.empty: st.write(p_s[['Ronde','Série/Équipes','Team Win','#Match']].to_html(index=False), unsafe_allow_html=True)
+            st.write("<hr>", unsafe_allow_html=True)
 
     with st.expander("📜 Règlement"):
         st.markdown('<div class="rules-section"><div class="rules-title">🏒 1. Pointage par Ronde</div>', unsafe_allow_html=True)
@@ -119,14 +128,4 @@ if 'Nom' in df_p.columns:
         t += "<tr><td>Finale</td><td>4 pts</td><td>+2</td></tr></table>"
         st.markdown(f'<div class="table-container">{t}</div></div>', unsafe_allow_html=True)
         
-        st.markdown('<div class="rules-section"><div class="rules-title">🎯 2. Bonus Précision (# Matchs)</div>', unsafe_allow_html=True)
-        b = '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
-        b += '<div class="bonus-card"><div><div class="bonus-label">En 4</div><div class="bonus-value">+4 pts</div></div></div>'
-        b += '<div class="bonus-card"><div><div class="bonus-label">En 5</div><div class="bonus-value">+3 pts</div></div></div>'
-        b += '<div class="bonus-card"><div><div class="bonus-label">En 6</div><div class="bonus-value">+2 pts</div></div></div>'
-        b += '<div class="bonus-card"><div><div class="bonus-label">En 7</div><div class="bonus-value">+1 pt</div></div></div>'
-        b += '</div><p style="font-size:0.8rem;color:#64748b;margin-top:10px;">*Exception Match 7 : Accordé même si ton équipe perd.</p></div>', unsafe_allow_html=True)
-
-        st.markdown('<div class="rules-section"><div class="rules-title">🏆 3. Bonus Globaux</div>', unsafe_allow_html=True)
-        st.markdown('• <b>Parcours Champion :</b> R1(+2), R2(+2), R3(+2), Finale(+4)<br>', unsafe_allow_html=True)
-        st.markdown('• <b>Trophée MVP :</b> +10 pts si ton choix remporte le Conn Smythe.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="rules-section"><div class="rules-
