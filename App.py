@@ -7,7 +7,7 @@ from datetime import datetime
 # 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="Pool de Hockey 2026", layout="wide")
 
-# 2. DESIGN FINAL & STYLE CSS PRO
+# 2. DESIGN FINAL & STYLE CSS PRO (VITESSE ACCÉLÉRÉE)
 st.markdown("""
     <style>
     /* BANNIÈRE NHL - STYLE STUDIO */
@@ -25,7 +25,8 @@ st.markdown("""
         display: flex;
         white-space: nowrap;
         padding-left: 100%;
-        animation: ticker 40s linear infinite;
+        /* Vitesse doublée : passée de 40s à 20s */
+        animation: ticker 20s linear infinite;
     }
     
     @keyframes ticker {
@@ -237,9 +238,4 @@ if 'Nom' in df_part.columns:
             st.write("<hr>", unsafe_allow_html=True)
 
     with st.expander("📜 Règlement officiel"):
-        st.markdown("""
-        <div class="rules-section"><b>1. Structure :</b> Éliminatoires (1/8 à Finale). Choix Coupe et MVP fixes.</div>
-        <div class="rules-section"><b>2. Points :</b> 1/8 (1 pt/vic), 1/4 (2 pts/vic), 1/2 (3 pts/vic), Finale (4 pts/vic). Bonus Série (+2).</div>
-        <div class="rules-section"><b>3. Bonus Matchs :</b> 4 (+4), 5 (+3), 6 (+2), 7 (+1). *Exception Match 7 : +1 même si défaite.</div>
-        <div class="rules-section"><b>4. Long Terme :</b> Parcours Champion (jusqu'à +10), MVP (+10).</div>
-        """, unsafe_allow_html=True)
+        st
