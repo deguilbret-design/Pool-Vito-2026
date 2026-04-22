@@ -3,10 +3,9 @@ import pandas as pd
 import urllib.parse
 import requests
 
-# 1. CONFIGURATION
+# 1. CONFIGURATION ET STYLE
 st.set_page_config(page_title="Pool de Hockey 2026", layout="wide")
 
-# 2. DESIGN PRO & VITESSE TURBO (15s)
 st.markdown("""
     <style>
     .nhl-ticker-wrap {
@@ -39,7 +38,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. SCORES NHL
+# 2. SCORES NHL
 def get_nhl_ticker():
     try:
         url = "https://api-web.nhle.com/v1/score/now"
@@ -63,12 +62,11 @@ def get_nhl_ticker():
 st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_nhl_ticker()}</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
-# 4. DATA LOADING
-SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
+# 3. CHARGEMENT DATA
+SID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 def load_data(sn):
-    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
-    df = pd.read_csv(url); df.columns = df.columns.str.strip()
-    return df
+    u = f"https://docs.google.com/spreadsheets/d/{SID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
+    df = pd.read_csv(u); df.columns = df.columns.str.strip(); return df
 
 try:
     df_part, df_pred, df_res = load_data("Participants"), load_data("Prédictions"), load_data("Résultats")
@@ -77,20 +75,66 @@ try:
 except Exception as e:
     st.error(f"Erreur : {e}"); st.stop()
 
-# 5. CALCULS
+# 4. CALCULS
 def calculer_tout(nom):
-    total, details = 0, []
+    tot, det = 0, []
     p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
     pts_r = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
     bon_m = {4: 4, 5: 3, 6: 2, 7: 1}
-    for _, pred in p_preds.iterrows():
-        s, c, r = str(pred['Série/Équipes']).strip(), str(pred['Team Win']).strip(), str(pred['Ronde']).strip()
-        m_res = df_res[df_res['Série/Équipes'].astype(str).str.strip() == s]
+    for _, prd in p_preds.iterrows():
+        s, c, r = str(prd['Série/Équipes']).strip(), str(prd['Team Win']).strip(), str(prd['Ronde']).strip()
+        m_r = df_res[df_res['Série/Équipes'].astype(str).str.strip() == s]
         pts_s, stt = 0, "❌"
-        if not m_res.empty:
-            res = m_res.iloc[0]
-            v = res['Victoires A'] if c == str(res['Équipe A']).strip() else (res['Victoires B'] if c == str(res['Équipe B']).strip() else 0)
+        if not m_r.empty:
+            res = m_r.iloc[0]; eA = str(res['Équipe A']).strip(); eB = str(res['Équipe B']).strip()
+            v = res['Victoires A'] if c == eA else (res['Victoires B'] if c == eB else 0)
             pts_s += (v * pts_r.get(r, 1))
             if str(res['Fini']).upper() == "OUI":
                 vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
-                mr = int(res['Victoires A'] + res['Victoires B
+                mr = int(res['Victoires A'] + res['Victoires B'])
+                if c == str(vr).strip():
+                    pts_s += 2
+                    try:
+                        if int(prd['#Match']) == mr: pts_s += bon_m.get(mr, 0)
+                    except: pass
+                elif str(prd['#Match']) == "7" and mr == 7: pts_s += 1
+            if pts_s > 0: stt = "✅"
+            tot += pts_s
+        det.append({"Statut": stt, "Série": s, "Choix": c, "Points": int(pts_s)})
+    return int(tot), det
+
+# 5. UI
+if 'Nom' in df_part.columns:
+    participants = df_part['Nom'].dropna().unique()
+    scores, details_p = [], {}
+    for n in participants:
+        p, d = calculer_tout(n); scores.append({"Participant": n, "Points": p}); details_p[n] = d
+    
+    st.markdown('<div class="sub-title">📊 Classement Général</div>', unsafe_allow_html=True)
+    df_rank = pd.DataFrame(scores).sort_values("Points", ascending=False)
+    df_rank.insert(0, "Rang", range(1, len(df_rank) + 1))
+    st.markdown(f'<div style="display:flex;justify-content:center;">{df_rank.to_html(index=False)}</div>', unsafe_allow_html=True)
+
+    with st.expander("🔍 Analyse des points"):
+        for n in participants:
+            st.subheader(f"Joueur : {n}")
+            st.write(pd.DataFrame(details_p[n]).to_html(index=False), unsafe_allow_html=True)
+
+    with st.expander("📋 Sélections des participants"):
+        ac = df_part.columns.tolist()
+        cc = next((c for c in ac if any(x in c.upper() for x in ["STANLEY", "CUP", "COUPE"])), None)
+        cm = next((c for c in ac if "MVP" in c.upper()), None)
+        for n in participants:
+            st.markdown(f"### **{n}**")
+            ur = df_part[df_part['Nom'].astype(str).str.strip() == str(n).strip()]
+            if not ur.empty:
+                c1, c2 = st.columns(2)
+                if cc: c1.markdown(f'<div class="bonus-card">🏆 <div><div class="bonus-label">Stanley Cup</div><div class="bonus-value">{ur[cc].iloc[0]}</div></div></div>', unsafe_allow_html=True)
+                if cm: c2.markdown(f'<div class="bonus-card">🎖️ <div><div class="bonus-label">MVP</div><div class="bonus-value">{ur[cm].iloc[0]}</div></div></div>', unsafe_allow_html=True)
+            p_p = df_pred[df_pred['Nom'].astype(str).str.strip() == str(n).strip()]
+            md = p_p[p_p['Série/Équipes'].notna()]
+            if not md.empty: st.write(md[['Ronde', 'Série/Équipes', 'Team Win', '#Match']].to_html(index=False), unsafe_allow_html=True)
+            st.write("<hr>", unsafe_allow_html=True)
+
+    with st.expander("📜 Règlement"):
+        st.markdown('<div class="rules-section">1/8 (1pt/vic), 1/4 (2pts/vic), 1/2 (3pts/vic), Finale (4pts/vic). Bonus Série (+2). Bonus Matchs: 4(+4), 5(+3), 6(+2), 7(+1). MVP (+10).</div>', unsafe_allow_html=True)
