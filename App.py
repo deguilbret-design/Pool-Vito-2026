@@ -167,5 +167,33 @@ if 'Nom' in df_part.columns:
             if not md.empty: st.write(md[['Ronde', 'Série/Équipes', 'Team Win', '#Match']].to_html(index=False), unsafe_allow_html=True)
             st.write("<hr>", unsafe_allow_html=True)
 
-    with st.expander("📜 Règlement"):
-        st.markdown('<div class="rules-section">1/8 (1pt/vic), 1/4 (2pts/vic), 1/2 (3pts/vic), Finale (4pts/vic). Bonus Série (+2). Bonus Matchs: 4(+4), 5(+3), 6(+2), 7(+1). MVP (+10).</div>', unsafe_allow_html=True)
+    with st.expander("📜 Règlement Officiel"):
+        # --- SECTION 1 : POINTS PAR RONDE ---
+        st.markdown('<div class="rules-section"><b>1. Pointage Évolutif</b><br>Les points par victoire augmentent à chaque ronde :</div>', unsafe_allow_html=True)
+        
+        html_table = '<div class="table-container"><table>'
+        html_table += '<tr><th>Ronde</th><th>Victoire</th><th>Boni Série</th></tr>'
+        html_table += '<tr><td>1/8 de finale</td><td>1 pt</td><td>+2 pts</td></tr>'
+        html_table += '<tr><td>1/4 de finale</td><td>2 pts</td><td>+2 pts</td></tr>'
+        html_table += '<tr><td>1/2 finale</td><td>3 pts</td><td>+2 pts</td></tr>'
+        html_table += '<tr><td>Finale</td><td>4 pts</td><td>+2 pts</td></tr>'
+        html_table += '</table></div>'
+        st.markdown(html_table, unsafe_allow_html=True)
+
+        # --- SECTION 2 : BONUS PRÉCISION ---
+        st.markdown('<div class="rules-section" style="margin-top:20px;"><b>2. Bonus de Précision (# de matchs)</b><br>Points accordés si tu devines le nombre exact de matchs :</div>', unsafe_allow_html=True)
+        
+        bonus_cards = '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">'
+        bonus_cards += '<div class="bonus-card" style="flex:1; min-width:100px;"><div><div class="bonus-label">En 4</div><div class="bonus-value">+4 pts</div></div></div>'
+        bonus_cards += '<div class="bonus-card" style="flex:1; min-width:100px;"><div><div class="bonus-label">En 5</div><div class="bonus-value">+3 pts</div></div></div>'
+        bonus_cards += '<div class="bonus-card" style="flex:1; min-width:100px;"><div><div class="bonus-label">En 6</div><div class="bonus-value">+2 pts</div></div></div>'
+        bonus_cards += '<div class="bonus-card" style="flex:1; min-width:100px;"><div><div class="bonus-label">En 7</div><div class="bonus-value">+1 pt</div></div></div>'
+        bonus_cards += '</div>'
+        st.markdown(bonus_cards, unsafe_allow_html=True)
+        
+        st.markdown('<p style="font-size:0.85rem; color:#64748b; margin-left:5px;"><i>*Exception Match 7 : Le point est accordé si la série se rend en 7 matchs, peu importe le vainqueur.</i></p>', unsafe_allow_html=True)
+
+        # --- SECTION 3 : BONUS GLOBAUX ---
+        st.markdown('<div class="rules-section" style="margin-top:20px;"><b>3. Bonus de Performance Globale</b></div>', unsafe_allow_html=True)
+        st.markdown('• <b>Parcours Champion :</b> R1 (+2), R2 (+2), R3 (+2), Victoire Finale (+4)<br>', unsafe_allow_html=True)
+        st.markdown('• <b>Trophée MVP :</b> +10 pts si ton choix initial remporte le Conn Smythe.', unsafe_allow_html=True)
