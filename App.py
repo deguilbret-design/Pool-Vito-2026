@@ -2,24 +2,28 @@ import streamlit as st
 import pandas as pd
 import urllib.parse
 import requests
-from datetime import datetime
-import pytz
 
+# 1. CONFIGURATION
 st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
 
-# CSS - Style Ticker, Table & Mobile
+# 2. DESIGN PRO & FIXES (Ticker 15s, Tableau Compact, Centrage)
 st.markdown("""<style>
-.nhl-ticker-wrap { width: 100%; overflow: hidden; background: #0b0f19; border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px; padding: 10px 0; }
+.nhl-ticker-wrap { 
+    width: 100%; overflow: hidden; background: #0b0f19; 
+    border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px; padding: 10px 0; 
+}
 .ticker { display: inline-flex; width: max-content; animation: ticker 15s linear infinite; }
 @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-50%, 0, 0); } }
-.game-card { flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; margin-right: 20px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; min-width: 230px; }
+.game-card { 
+    flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 6px; margin-right: 20px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; min-width: 230px; 
+}
 .game-card.live { border-color: #ff4b4b; background: rgba(255,75,75,0.1); }
 .team { font-weight: 700; font-size: 0.9rem; color: #fff; width: 40px; text-align: center; }
 .score { background: #1e293b; color: #fbbf24; font-weight: 900; padding: 2px 8px; border-radius: 4px; }
-.live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; animation: blink 1s infinite; }
+.live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
 @keyframes blink { 0% {opacity:1;} 50% {opacity:0.2;} 100% {opacity:1;} }
-.sync-time { text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic; margin-bottom: 20px; }
-.table-container { display: flex; justify-content: center; width: 100%; }
+.table-container { display: flex; justify-content: center; width: 100%; margin-bottom: 20px; }
 table { width: auto !important; margin: auto; border-radius: 10px; overflow: hidden; border-collapse: collapse; }
 th { background: #1f77b4; color: white; padding: 10px 20px; text-align: center !important; }
 td { padding: 10px 20px; border-bottom: 1px solid #eee; text-align: center !important; font-weight: 600; }
@@ -27,11 +31,12 @@ td { padding: 10px 20px; border-bottom: 1px solid #eee; text-align: center !impo
 .bonus-value { color: #0f172a; font-size: 1.1rem; font-weight: 700; }
 </style>""", unsafe_allow_html=True)
 
+# 3. SCORES NHL (Vitesse 15s et boucle infinie)
 def get_scores():
     try:
         r = requests.get("https://api-web.nhle.com/v1/score/now", timeout=5).json()
         games = r.get('games', [])
-        if not games: return '<div class="game-card">📅 Aucun match</div>'
+        if not games: return '<div class="game-card">📅 Aucun match prévu</div>'
         h = ""
         for g in games:
             aw, hm = g['awayTeam']['abbrev'], g['homeTeam']['abbrev']
@@ -41,13 +46,16 @@ def get_scores():
             elif stt in ["LIVE","CRIT"]: 
                 css += " live"; p = g.get('periodDescriptor',{}).get('number', 1)
                 bdg = f'<span class="live-dot"></span> P{p}'
-            h += f'<div class="{css}"><span class="team">{aw}</span><span class="score">{ascor}</span>VS<span class="score">{hscor}</span><span class="team">{hm}</span><span style="font-size:0.6rem;">{bdg}</span></div>'
+            h += f'<div class="{css}"><span class="team">{aw}</span><span class="score">{ascor}</span>VS'
+            h += f'<span class="score">{hscor}</span><span class="team">{hm}</span>'
+            h += f'<span style="font-size:0.6rem;margin-left:5px;">{bdg}</span></div>'
         return h + h
-    except: return '<div class="game-card">⚠️ NHL Indisponible</div>'
+    except: return '<div class="game-card">⚠️ Scores NHL indisponibles</div>'
 
 st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_scores()}</div></div>', unsafe_allow_html=True)
-st.markdown('<h2 style="text-align:center;color:#1f77b4;">🏆 Pool Hockey 2026</h2>', unsafe_allow_html=True)
+st.markdown('<h2 style="text-align:center;color:#1f77b4;margin-top:20px;">🏆 Pool Hockey 2026</h2>', unsafe_allow_html=True)
 
+# 4. DONNÉES GOOGLE
 SID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 def load(sn):
     u = f"https://docs.google.com/spreadsheets/d/{SID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
@@ -55,65 +63,15 @@ def load(sn):
 
 try:
     df_p, df_pr, df_r = load("Participants"), load("Prédictions"), load("Résultats")
-    try:
-        ds = load("System")
-        dt = pd.to_datetime(ds.columns[0]).tz_localize('UTC').tz_convert(pytz.timezone('America/Montreal'))
-        upd = dt.strftime("%d/%m/%Y à %H:%M:%S")
-    except: upd = "En attente..."
-    st.markdown(f'<div class="sync-time">Fichier modifié le : {upd}</div>', unsafe_allow_html=True)
     df_r['Victoires A'] = pd.to_numeric(df_r['Victoires A'], errors='coerce').fillna(0)
     df_r['Victoires B'] = pd.to_numeric(df_r['Victoires B'], errors='coerce').fillna(0)
-except Exception as e: st.error(f"Erreur : {e}"); st.stop()
+except Exception as e: 
+    st.error(f"Erreur : {e}"); st.stop()
 
+# 5. CALCULS
 def calc(n):
     t, d = 0, []
     sub = df_pr[df_pr['Nom'].astype(str).str.strip() == str(n).strip()]
     r_pts, b_pts = {"1/8":1,"1/4":2,"1/2":3,"Finale":4}, {4:4,5:3,6:2,7:1}
     for _, p in sub.iterrows():
-        se, ch, ro = str(p['Série/Équipes']).strip(), str(p['Team Win']).strip(), str(p['Ronde']).strip()
-        m = df_r[df_r['Série/Équipes'].astype(str).str.strip() == se]
-        ps, ok = 0, "❌"
-        if not m.empty:
-            res = m.iloc[0]; eA, eB = str(res['Équipe A']).strip(), str(res['Équipe B']).strip()
-            v = res['Victoires A'] if ch == eA else (res['Victoires B'] if ch == eB else 0)
-            ps += (v * r_pts.get(ro, 1))
-            if str(res['Fini']).upper() == "OUI":
-                vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
-                mr = int(res['Victoires A'] + res['Victoires B'])
-                if ch == str(vr).strip():
-                    ps += 2
-                    try: 
-                        if int(p['#Match']) == mr: ps += b_pts.get(mr, 0)
-                    except: pass
-                elif str(p['#Match']) == "7" and mr == 7: ps += 1
-            if ps > 0: ok = "✅"
-            t += ps
-        d.append({"Statut": ok, "Série": se, "Choix": ch, "Points": int(ps)})
-    return int(t), d
-
-if 'Nom' in df_p.columns:
-    users = df_p['Nom'].dropna().unique()
-    sc, det = [], {}
-    for u in users:
-        p, d = calc(u); sc.append({"Participant": u, "Points": p}); det[u] = d
-    st.markdown('<h3 style="text-align:center;">📊 Classement</h3>', unsafe_allow_html=True)
-    rk = pd.DataFrame(sc).sort_values("Points", ascending=False)
-    rk.insert(0, "Rang", range(1, len(rk) + 1))
-    st.markdown(f'<div class="table-container">{rk.to_html(index=False)}</div>', unsafe_allow_html=True)
-    with st.expander("🔍 Détails"):
-        for u in users:
-            st.subheader(u); st.write(pd.DataFrame(det[u]).to_html(index=False), unsafe_allow_html=True)
-    with st.expander("📋 Sélections"):
-        cols = df_p.columns.tolist()
-        cn = next((c for c in cols if "COUPE" in c.upper() or "STANLEY" in c.upper()), None)
-        mn = next((c for c in cols if "MVP" in c.upper()), None)
-        for u in users:
-            st.markdown(f"### **{u}**")
-            r = df_p[df_p['Nom'].astype(str).str.strip() == str(u).strip()]
-            if not r.empty:
-                c1, c2 = st.columns(2)
-                if cn: c1.markdown(f'<div class="bonus-card">🏆 <div class="bonus-value">{r[cn].iloc[0]}</div></div>', unsafe_allow_html=True)
-                if mn: c2.markdown(f'<div class="bonus-card">🎖️ <div class="bonus-value">{r[mn].iloc[0]}</div></div>', unsafe_allow_html=True)
-            p_s = df_pr[df_pr['Nom'].astype(str).str.strip() == str(u).strip()]
-            if not p_s.empty: st.write(p_s[['Ronde','Série/Équipes','Team Win','#Match']].to_html(index=False), unsafe_allow_html=True)
-            st.write("<hr>", unsafe_allow_html=True)
+        se, ch, ro = str(p['Série/Équipes']).
