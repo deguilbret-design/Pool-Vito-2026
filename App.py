@@ -20,7 +20,7 @@ st.markdown("""
     .ticker { 
         display: inline-flex; /* Fix pour le défilement mobile */
         white-space: nowrap;
-        animation: ticker 15s linear infinite; 
+        animation: ticker 9s linear infinite; 
     }
     @keyframes ticker { 
         0% { transform: translate3d(0, 0, 0); } 
