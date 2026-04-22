@@ -7,70 +7,138 @@ from datetime import datetime
 # 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="Pool de Hockey 2026", layout="wide")
 
-# 2. DESIGN & STYLE CSS
+# 2. DESIGN FINAL & STYLE CSS PRO
 st.markdown("""
     <style>
-    .nhl-ticker {
-        background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
-        color: white; padding: 15px 0; overflow: hidden;
-        border-bottom: 3px solid #1f77b4; margin: -50px -50px 30px -50px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    /* BANNIÈRE NHL - STYLE STUDIO */
+    .nhl-ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+        background: #0b0f19;
+        border-bottom: 2px solid #1f77b4;
+        margin: -50px -50px 30px -50px;
+        padding: 10px 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    .ticker-content { display: inline-block; animation: marquee 45s linear infinite; }
+    
+    .ticker {
+        display: flex;
+        white-space: nowrap;
+        padding-left: 100%;
+        animation: ticker 40s linear infinite;
+    }
+    
+    @keyframes ticker {
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(-100%, 0, 0); }
+    }
+
     .game-card {
-        display: inline-flex; align-items: center; background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px; padding: 8px 15px; margin: 0 15px; border-left: 4px solid #444; min-width: 220px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        margin-right: 20px;
+        padding: 5px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 230px;
     }
-    .game-card.live { border-left-color: #ff4b4b; background: rgba(255, 75, 75, 0.1); }
-    .game-card.final { border-left-color: #28a745; }
-    .team-name { font-weight: 800; font-size: 0.95rem; color: #f8fafc; }
-    .team-score { font-family: 'Monaco', monospace; font-size: 1.1rem; font-weight: bold; background: #000; padding: 2px 8px; border-radius: 4px; margin: 0 5px; color: #fbbf24; }
-    .game-status { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-left: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); }
-    .live-dot { height: 8px; width: 8px; background-color: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
-    @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.3;} 100% {opacity: 1;} }
-    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .main-title { text-align: center; color: #1f77b4; font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
-    .sub-title { text-align: center; color: #333; margin-top: 20px; font-weight: bold; font-size: 1.5rem; }
-    table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
-    th { background-color: #1f77b4; color: white; padding: 12px; text-align: center !important; }
-    td { padding: 10px; text-align: center !important; border-bottom: 1px solid #eee; font-size: 1rem; }
-    .bonus-card { background-color: #eef6fb; border: 1px solid #b6d4fe; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; min-height: 85px; }
-    .bonus-label { color: #084298; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; display: block; }
-    .bonus-value { font-size: 1.2rem; font-weight: bold; color: #333; }
-    .bonus-icon { font-size: 2.2rem; min-width: 40px; text-align: center; }
-    .rules-section { background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid #1f77b4; margin-bottom: 20px; }
+
+    .game-card.live { border-color: #ff4b4b; background: rgba(255, 75, 75, 0.1); }
+    .game-card.final { border-color: #28a745; background: rgba(40, 167, 69, 0.05); }
+
+    .team { font-weight: 700; font-size: 0.9rem; color: #fff; width: 40px; text-align: center; }
+    .score { 
+        background: #1e293b; 
+        color: #fbbf24; 
+        font-weight: 900; 
+        padding: 2px 8px; 
+        border-radius: 4px; 
+        min-width: 25px; 
+        text-align: center;
+    }
+    
+    .status-badge {
+        font-size: 0.6rem;
+        font-weight: bold;
+        padding: 2px 5px;
+        border-radius: 3px;
+        background: rgba(255,255,255,0.1);
+        color: #94a3b8;
+    }
+
+    .live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; animation: blink 1s infinite; }
+    @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.2;} 100% {opacity: 1;} }
+
+    /* CLASSEMENT & INTERFACE */
+    .main-title { text-align: center; color: #1f77b4; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px; }
+    .sub-title { text-align: center; color: #333; margin-top: 15px; font-weight: 700; font-size: 1.4rem; }
+    
+    table { width: 100%; border-radius: 10px; overflow: hidden; border-collapse: collapse; }
+    th { background: #1f77b4; color: white; padding: 12px; font-size: 0.9rem; text-transform: uppercase; }
+    td { padding: 12px; border-bottom: 1px solid #eee; text-align: center !important; }
+
+    .bonus-card {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .bonus-label { color: #64748b; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+    .bonus-value { color: #0f172a; font-size: 1.1rem; font-weight: 700; }
+    
+    .rules-section { background: #f8fafc; padding: 15px; border-left: 4px solid #1f77b4; margin-bottom: 10px; border-radius: 4px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. FONCTION SCORES NHL
+# 3. RÉCUPÉRATION DES SCORES NHL
 def get_nhl_ticker():
     try:
         url = "https://api-web.nhle.com/v1/score/now"
         data = requests.get(url, timeout=5).json()
         games = data.get('games', [])
-        if not games: 
-            return '<div class="game-card">🏒 Aucun match aujourd\'hui</div>'
-        t_html = ""
+        if not games:
+            return '<div class="game-card">📅 Aucun match prévu aujourd\'hui</div>'
+        
+        cards = ""
         for g in games:
             away, home = g['awayTeam']['abbrev'], g['homeTeam']['abbrev']
             ascor, hscor = g['awayTeam'].get('score', 0), g['homeTeam'].get('score', 0)
-            status, c_class, s_text = g['gameState'], "game-card", '<span class="game-status">À VENIR</span>'
+            status = g['gameState']
+            
+            css_class = "game-card"
+            badge = '<span class="status-badge">À VENIR</span>'
+            
             if status in ["OFF", "FINAL"]:
-                c_class += " final"
-                s_text = '<span class="game-status">FIN</span>'
+                css_class += " final"
+                badge = '<span class="status-badge" style="color:#4ade80;">FINAL</span>'
             elif status in ["LIVE", "CRIT"]:
-                c_class += " live"
+                css_class += " live"
                 p = g.get('periodDescriptor', {}).get('number', 1)
-                s_text = f'<span class="game-status"><span class="live-dot"></span>P{p}</span>'
-            t_html += f'<div class="{c_class}"><span class="team-name">{away}</span><span class="team-score">{ascor}</span><span style="color:#64748b;">vs</span><span class="team-score">{hscor}</span><span class="team-name">{home}</span>{s_text}</div>'
-        return t_html + t_html
-    except: 
-        return '<div class="game-card">⚠️ Scores NHL indisponibles</div>'
+                badge = f'<span class="status-badge" style="color:#f87171;"><span class="live-dot"></span> P{p}</span>'
+            
+            cards += f'''
+                <div class="{css_class}">
+                    <span class="team">{away}</span><span class="score">{ascor}</span>
+                    <span style="color:#475569;font-size:0.7rem;">VS</span>
+                    <span class="score">{hscor}</span><span class="team">{home}</span>
+                    {badge}
+                </div>'''
+        return cards
+    except:
+        return '<div class="game-card">⚠️ Données NHL indisponibles</div>'
 
-st.markdown(f'<div class="nhl-ticker"><div class="ticker-content">{get_nhl_ticker()}</div></div>', unsafe_allow_html=True)
+# AFFICHAGE BANNIÈRE
+st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_nhl_ticker()}</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
-# 4. CHARGEMENT DES DONNÉES
+# 4. DONNÉES GOOGLE SHEETS
 SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 
 def load_data(sn):
@@ -95,82 +163,83 @@ def calculer_tout(nom):
     p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
     pts_r = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
     bon_m = {4: 4, 5: 3, 6: 2, 7: 1}
+
     for _, pred in p_preds.iterrows():
         s = str(pred['Série/Équipes']).strip()
         c = str(pred['Team Win']).strip()
         r = str(pred['Ronde']).strip()
         m_res = df_res[df_res['Série/Équipes'].astype(str).str.strip() == s]
         pts_s, stt = 0, "❌"
+        
         if not m_res.empty:
             res = m_res.iloc[0]
-            eqA = str(res['Équipe A']).strip()
-            eqB = str(res['Équipe B']).strip()
+            eqA, eqB = str(res['Équipe A']).strip(), str(res['Équipe B']).strip()
             v = res['Victoires A'] if c == eqA else (res['Victoires B'] if c == eqB else 0)
             pts_s += (v * pts_r.get(r, 1))
+            
             if str(res['Fini']).upper() == "OUI":
                 vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
                 mr = int(res['Victoires A'] + res['Victoires B'])
                 if c == str(vr).strip():
                     pts_s += 2
                     try:
-                        if int(pred['#Match']) == mr: 
-                            pts_s += bon_m.get(mr, 0)
-                    except: 
-                        pass
-                elif str(pred['#Match']) == "7" and mr == 7: 
+                        if int(pred['#Match']) == mr: pts_s += bon_m.get(mr, 0)
+                    except: pass
+                elif str(pred['#Match']) == "7" and mr == 7:
                     pts_s += 1
-            if pts_s > 0: 
-                stt = "✅"
+            if pts_s > 0: stt = "✅"
             total += pts_s
         details.append({"Statut": stt, "Série": s, "Choix": c, "Points": int(pts_s)})
     return int(total), details
 
-# 6. INTERFACE
+# 6. INTERFACE UTILISATEUR
 if 'Nom' in df_part.columns:
     participants = df_part['Nom'].dropna().unique()
     scores_finaux = []
     tous_details = {}
-    for n in participants:
-        pts, det = calculer_tout(n)
-        scores_finaux.append({"Participant": n, "Points": pts})
-        tous_details[n] = det
+
+    for nom in participants:
+        pts, det = calculer_tout(nom)
+        scores_finaux.append({"Participant": nom, "Points": pts})
+        tous_details[nom] = det
 
     st.markdown('<div class="sub-title">📊 Classement Général</div>', unsafe_allow_html=True)
     df_rank = pd.DataFrame(scores_finaux).sort_values("Points", ascending=False)
     df_rank.insert(0, "Rang", range(1, len(df_rank) + 1))
-    c1, c2, c3 = st.columns([1, 4, 1])
-    with c2: 
+    c1, c2, c3 = st.columns([1, 5, 1])
+    with c2:
         st.markdown(f'<div style="display:flex;justify-content:center;">{df_rank.to_html(index=False)}</div>', unsafe_allow_html=True)
 
     st.write("---")
-    with st.expander("🔍 Pourquoi ce score ? (Détails par série)"):
+
+    with st.expander("🔍 Analyse des points (Détails par série)"):
         for n in participants:
             st.subheader(f"Joueur : {n}")
-            st.write(pd.DataFrame(tous_details[n]).to_html(index=False, escape=False), unsafe_allow_html=True)
+            st.write(pd.DataFrame(tous_details[n]).to_html(index=False), unsafe_allow_html=True)
 
-    with st.expander("📋 Voir les sélections de chaque participant"):
+    with st.expander("📋 Sélections des participants"):
         ac = df_part.columns.tolist()
         cc = next((c for c in ac if any(x in c.upper() for x in ["STANLEY", "CUP", "COUPE"])), None)
         cm = next((c for c in ac if "MVP" in c.upper()), None)
+        
         for n in participants:
             st.markdown(f"### Prédictions de **{n}**")
             ur = df_part[df_part['Nom'].astype(str).str.strip() == str(n).strip()]
             if not ur.empty:
-                ca, cb = st.columns(2)
-                if cc: 
-                    ca.markdown(f'<div class="bonus-card"><span class="bonus-icon">🏆</span><div><span class="bonus-label">Stanley Cup</span><span class="bonus-value">{ur[cc].iloc[0]}</span></div></div>', unsafe_allow_html=True)
-                if cm: 
-                    cb.markdown(f'<div class="bonus-card"><span class="bonus-icon">🎖️</span><div><span class="bonus-label">MVP Choisi</span><span class="bonus-value">{ur[cm].iloc[0]}</span></div></div>', unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                if cc: col1.markdown(f'<div class="bonus-card"><span style="font-size:1.5rem;">🏆</span><div><div class="bonus-label">Stanley Cup</div><div class="bonus-value">{ur[cc].iloc[0]}</div></div></div>', unsafe_allow_html=True)
+                if cm: col2.markdown(f'<div class="bonus-card"><span style="font-size:1.5rem;">🎖️</span><div><div class="bonus-label">MVP Choisi</div><div class="bonus-value">{ur[cm].iloc[0]}</div></div></div>', unsafe_allow_html=True)
+            
             p_p = df_pred[df_pred['Nom'].astype(str).str.strip() == str(n).strip()]
             md = p_p[p_p['Série/Équipes'].notna()]
-            if not md.empty: 
+            if not md.empty:
                 st.write(md[['Ronde', 'Série/Équipes', 'Team Win', '#Match']].to_html(index=False), unsafe_allow_html=True)
             st.write("<hr>", unsafe_allow_html=True)
 
-    with st.expander("📜 Règlement officiel - Pool de Hockey 2026"):
+    with st.expander("📜 Règlement officiel"):
         st.markdown("""
-        <div class="rules-section"><h4>1. Structure</h4><ul><li>Format éliminatoire. Choix Coupe Stanley et MVP fixés au départ.</li></ul></div>
-        <div class="rules-section"><h4>2. Pointage</h4><table style="width:auto;"><tr><th>Ronde</th><th>Pts/Victoire</th><th>Bonus Série</th></tr><tr><td>1/8</td><td>1</td><td>+2</td></tr><tr><td>1/4</td><td>2</td><td>+2</td></tr><tr><td>1/2</td><td>3</td><td>+2</td></tr><tr><td>Finale</td><td>4</td><td>+2</td></tr></table></div>
-        <div class="rules-section"><h4>3. Bonus Matchs</h4><ul><li>4: +4 pts | 5: +3 pts | 6: +2 pts | 7: +1 pt</li></ul><p><i>Exception Match 7 : Le +1 est donné si la série se rend en 7, peu importe le vainqueur.</i></p></div>
-        <div class="rules-section"><h4>4. Long Terme</h4><ul><li>Parcours Champion: R1(+2), R2(+2), R3(+2), Finale(+4)</li><li>MVP: +10 pts si exact.</li></ul></div>
+        <div class="rules-section"><b>1. Structure :</b> Éliminatoires (1/8 à Finale). Choix Coupe et MVP fixes.</div>
+        <div class="rules-section"><b>2. Points :</b> 1/8 (1 pt/vic), 1/4 (2 pts/vic), 1/2 (3 pts/vic), Finale (4 pts/vic). Bonus Série (+2).</div>
+        <div class="rules-section"><b>3. Bonus Matchs :</b> 4 (+4), 5 (+3), 6 (+2), 7 (+1). *Exception Match 7 : +1 même si défaite.</div>
+        <div class="rules-section"><b>4. Long Terme :</b> Parcours Champion (jusqu'à +10), MVP (+10).</div>
         """, unsafe_allow_html=True)
