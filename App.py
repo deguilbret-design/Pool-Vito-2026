@@ -193,7 +193,7 @@ if 'Nom' in df_part.columns:
         
         st.markdown('<p style="font-size:0.85rem; color:#64748b; margin-left:5px;"><i>*Exception Match 7 : Le point est accordé si la série se rend en 7 matchs, peu importe le vainqueur.</i></p>', unsafe_allow_html=True)
 
-        # --- SECTION 3 : BONUS GLOBAUX ---
+        # --- SECTION 3 : BONUS ÉQUIPES CHAMPIONNE ET MVP ---
         st.markdown('<div class="rules-section" style="margin-top:20px;"><b>3. Bonus de Performance Globale</b></div>', unsafe_allow_html=True)
         st.markdown('• <b>Parcours Champion :</b> R1 (+2), R2 (+2), R3 (+2), Victoire Finale (+4)<br>', unsafe_allow_html=True)
         st.markdown('• <b>Trophée MVP :</b> +10 pts si ton choix initial remporte le Conn Smythe.', unsafe_allow_html=True)
