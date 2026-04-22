@@ -3,9 +3,10 @@ import pandas as pd
 import urllib.parse
 import requests
 
-# 1. CONFIGURATION ET STYLE
+# 1. CONFIGURATION
 st.set_page_config(page_title="Pool de Hockey 2026", layout="wide")
 
+# 2. DESIGN PRO & FIX MOBILE SEAMLESS
 st.markdown("""
     <style>
     .nhl-ticker-wrap {
@@ -13,8 +14,16 @@ st.markdown("""
         border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px;
         padding: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    .ticker { display: flex; white-space: nowrap; padding-left: 100%; animation: ticker 10s linear infinite; }
-    @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+    .ticker { 
+        display: flex; 
+        width: max-content; /* Important pour mobile */
+        animation: ticker 15s linear infinite; 
+    }
+    /* Animation fluide : on défile 50% du contenu doublé */
+    @keyframes ticker { 
+        0% { transform: translate3d(0, 0, 0); } 
+        100% { transform: translate3d(-50%, 0, 0); } 
+    }
     .game-card {
         flex-shrink: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 6px; margin-right: 20px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; min-width: 230px;
@@ -26,11 +35,14 @@ st.markdown("""
     .status-badge { font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 3px; background: rgba(255,255,255,0.1); color: #94a3b8; }
     .live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; animation: blink 1s infinite; }
     @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.2;} 100% {opacity: 1;} }
+    
     .main-title { text-align: center; color: #1f77b4; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px; }
     .sub-title { text-align: center; color: #333; margin-top: 15px; font-weight: 700; font-size: 1.4rem; }
+    
     table { width: 100%; border-radius: 10px; overflow: hidden; border-collapse: collapse; }
     th { background: #1f77b4; color: white; padding: 12px; font-size: 0.9rem; text-transform: uppercase; }
     td { padding: 12px; border-bottom: 1px solid #eee; text-align: center !important; }
+    
     .bonus-card { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
     .bonus-label { color: #64748b; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
     .bonus-value { color: #0f172a; font-size: 1.1rem; font-weight: 700; }
@@ -38,7 +50,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. SCORES NHL
+# 3. SCORES NHL (DOUBLÉS POUR MOBILE)
 def get_nhl_ticker():
     try:
         url = "https://api-web.nhle.com/v1/score/now"
@@ -56,13 +68,14 @@ def get_nhl_ticker():
                 css += " live"; p = g.get('periodDescriptor', {}).get('number', 1)
                 badge = f'<span class="status-badge" style="color:#f87171;"><span class="live-dot"></span> P{p}</span>'
             cards += f'<div class="{css}"><span class="team">{away}</span><span class="score">{ascor}</span><span style="color:#475569;font-size:0.7rem;">VS</span><span class="score">{hscor}</span><span class="team">{home}</span>{badge}</div>'
-        return cards
+        # Retourne les cartes doublées pour un effet de boucle infinie sans saut
+        return cards + cards
     except: return '<div class="game-card">⚠️ Données NHL indisponibles</div>'
 
 st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_nhl_ticker()}</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
-# 3. CHARGEMENT DATA
+# 4. DATA LOADING
 SID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 def load_data(sn):
     u = f"https://docs.google.com/spreadsheets/d/{SID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
@@ -75,7 +88,7 @@ try:
 except Exception as e:
     st.error(f"Erreur : {e}"); st.stop()
 
-# 4. CALCULS
+# 5. CALCULS
 def calculer_tout(nom):
     tot, det = 0, []
     p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
@@ -103,7 +116,7 @@ def calculer_tout(nom):
         det.append({"Statut": stt, "Série": s, "Choix": c, "Points": int(pts_s)})
     return int(tot), det
 
-# 5. UI
+# 6. UI
 if 'Nom' in df_part.columns:
     participants = df_part['Nom'].dropna().unique()
     scores, details_p = [], {}
