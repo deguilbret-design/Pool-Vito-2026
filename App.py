@@ -13,7 +13,7 @@ st.markdown("""
         border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px;
         padding: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    .ticker { display: flex; white-space: nowrap; padding-left: 100%; animation: ticker 15s linear infinite; }
+    .ticker { display: flex; white-space: nowrap; padding-left: 100%; animation: ticker 10s linear infinite; }
     @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
     .game-card {
         flex-shrink: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
