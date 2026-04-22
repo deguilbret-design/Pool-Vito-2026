@@ -3,10 +3,10 @@ import pandas as pd
 import urllib.parse
 import requests
 
-# 1. CONFIG
-st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
+# 1. CONFIGURATION
+st.set_page_config(page_title="Vito's Super Hockey Pool 2026", layout="wide")
 
-# 2. STYLE CSS (Ticker, Tableau Compact & Centré)
+# 2. DESIGN & STYLE CSS (Ticker, Tableaux et Centrage)
 st.markdown("""<style>
 .nhl-ticker-wrap { 
     width: 100%; overflow: hidden; background: #0b0f19; 
@@ -37,7 +37,7 @@ def get_scores():
     try:
         r = requests.get("https://api-web.nhle.com/v1/score/now", timeout=5).json()
         games = r.get('games', [])
-        if not games: return '<div class="game-card">📅 Aucun match</div>'
+        if not games: return '<div class="game-card">📅 Aucun match prévu</div>'
         h = ""
         for g in games:
             aw, hm = g['awayTeam']['abbrev'], g['homeTeam']['abbrev']
@@ -55,9 +55,9 @@ def get_scores():
     except: return '<div class="game-card">⚠️ NHL Indisponible</div>'
 
 st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_scores()}</div></div>', unsafe_allow_html=True)
-st.markdown('<h2 style="text-align:center;color:#1f77b4;margin-top:20px;">🏆 Pool Hockey 2026</h2>', unsafe_allow_html=True)
+st.markdown('<h2 style="text-align:center;color:#1f77b4;margin-top:20px;">🏆 Vito\'s Super Hockey Pool 2026</h2>', unsafe_allow_html=True)
 
-# 4. DATA
+# 4. CHARGEMENT DES DONNÉES
 SID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 def load(sn):
     u = f"https://docs.google.com/spreadsheets/d/{SID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
@@ -70,9 +70,9 @@ try:
     df_r['Victoires A'] = pd.to_numeric(df_r['Victoires A'], errors='coerce').fillna(0)
     df_r['Victoires B'] = pd.to_numeric(df_r['Victoires B'], errors='coerce').fillna(0)
 except Exception as e: 
-    st.error(f"Erreur : {e}"); st.stop()
+    st.error(f"Erreur de données : {e}"); st.stop()
 
-# 5. CALCULS
+# 5. CALCULS DES POINTS
 def calc(n):
     t, d = 0, []
     sub = df_pr[df_pr['Nom'].astype(str).str.strip() == str(n).strip()]
@@ -100,22 +100,27 @@ def calc(n):
         d.append({"Statut": ok, "Série": se, "Choix": ch, "Points": int(ps)})
     return int(t), d
 
-# 6. UI
+# 6. INTERFACE UTILISATEUR
 if 'Nom' in df_p.columns:
     users = df_p['Nom'].dropna().unique()
     sc, det = [], {}
     for u in users:
         p, d = calc(u); sc.append({"Participant": u, "Points": p}); det[u] = d
-    st.markdown('<h3 style="text-align:center;margin-top:20px;">📊 Classement</h3>', unsafe_allow_html=True)
+    
+    st.markdown('<h3 style="text-align:center;margin-top:20px;">📊 Classement Général</h3>', unsafe_allow_html=True)
     rk = pd.DataFrame(sc).sort_values("Points", ascending=False)
     rk.insert(0, "Rang", range(1, len(rk) + 1))
     st.markdown(f'<div class="table-container">{rk.to_html(index=False)}</div>', unsafe_allow_html=True)
-    with st.expander("🔍 Détails"):
+    
+    st.write("---")
+    with st.expander("🔍 Analyse des points (Détails)"):
         for u in users:
-            st.subheader(u); st.write(pd.DataFrame(det[u]).to_html(index=False), unsafe_allow_html=True)
+            st.subheader(f"Joueur : {u}")
+            st.write(pd.DataFrame(det[u]).to_html(index=False), unsafe_allow_html=True)
+
     with st.expander("📋 Sélections"):
         cols = df_p.columns.tolist()
-        cn = next((c for c in cols if "COUPE" in c.upper() or "STANLEY" in c.upper()), None)
+        cn = next((c for c in cols if any(x in c.upper() for x in ["COUPE", "STANLEY"])), None)
         mn = next((c for c in cols if "MVP" in c.upper()), None)
         for u in users:
             st.markdown(f"#### **{u}**")
@@ -127,6 +132,6 @@ if 'Nom' in df_p.columns:
             p_s = df_pr[df_pr['Nom'].astype(str).str.strip() == str(u).strip()]
             if not p_s.empty: st.write(p_s[['Ronde','Série/Équipes','Team Win','#Match']].to_html(index=False), unsafe_allow_html=True)
             st.write("<hr>", unsafe_allow_html=True)
-    with st.expander("📜 Règlement"):
-        st.markdown('<div class="rules-section"><b>1. Points :</b> 1/8(1pt), 1/4(2pts), 1/2(3pts), Finale(4pts) par victoire + 2pts gagnant série.</div>', unsafe_allow_html=True)
-        st.markdown('<div class="rules-section"><b>2. Bonus Précision :</b> Matchs pile : 4(+4), 5(+3), 6(+2), 7(+1). MVP (+10).</div>', unsafe_allow_html=True)
+
+    with st.expander("📜 Règlement - Vito's Super Hockey Pool 2026"):
+        st.markdown('<div class="rules-section"><b>1. Structure :</b> 1/8, 1/4, 1/2 et Finale. Prédiction du vainqueur et du nombre de matchs (4 à 7).
