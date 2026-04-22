@@ -6,32 +6,23 @@ import requests
 # 1. CONFIG
 st.set_page_config(page_title="Pool Hockey 2026", layout="wide")
 
-# 2. CSS (TICKER MOBILE, TABLEAU COMPACT ET CENTRÉ)
+# 2. STYLE CSS (Ticker, Tableau Compact & Centré)
 st.markdown("""<style>
 .nhl-ticker-wrap { 
     width: 100%; overflow: hidden; background: #0b0f19; 
-    border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px; 
-    padding: 10px 0; 
+    border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px; padding: 10px 0; 
 }
-.ticker { 
-    display: inline-flex; width: max-content; 
-    animation: ticker 15s linear infinite; 
-}
-@keyframes ticker { 
-    0% { transform: translate3d(0, 0, 0); } 
-    100% { transform: translate3d(-50%, 0, 0); } 
-}
+.ticker { display: inline-flex; width: max-content; animation: tk 15s linear infinite; }
+@keyframes tk { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-50%, 0, 0); } }
 .game-card { 
-    flex-shrink: 0; background: rgba(255,255,255,0.05); 
-    border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; 
-    margin-right: 20px; padding: 5px 15px; display: flex; 
-    align-items: center; gap: 10px; min-width: 230px; 
+    flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 6px; margin-right: 20px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; min-width: 230px; 
 }
 .game-card.live { border-color: #ff4b4b; background: rgba(255,75,75,0.1); }
 .team { font-weight: 700; font-size: 0.9rem; color: #fff; width: 40px; text-align: center; }
 .score { background: #1e293b; color: #fbbf24; font-weight: 900; padding: 2px 8px; border-radius: 4px; }
-.live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
-@keyframes blink { 0% {opacity:1;} 50% {opacity:0.2;} 100% {opacity:1;} }
+.live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blk 1s infinite; }
+@keyframes blk { 0% {opacity:1;} 50% {opacity:0.2;} 100% {opacity:1;} }
 .table-container { display: flex; justify-content: center; width: 100%; margin-bottom: 20px; }
 table { width: auto !important; margin: auto; border-radius: 10px; overflow: hidden; border-collapse: collapse; }
 th { background: #1f77b4; color: white; padding: 10px 20px; text-align: center !important; }
@@ -44,8 +35,7 @@ td { padding: 10px 20px; border-bottom: 1px solid #eee; text-align: center !impo
 # 3. SCORES NHL
 def get_scores():
     try:
-        url = "https://api-web.nhle.com/v1/score/now"
-        r = requests.get(url, timeout=5).json()
+        r = requests.get("https://api-web.nhle.com/v1/score/now", timeout=5).json()
         games = r.get('games', [])
         if not games: return '<div class="game-card">📅 Aucun match</div>'
         h = ""
@@ -86,12 +76,9 @@ except Exception as e:
 def calc(n):
     t, d = 0, []
     sub = df_pr[df_pr['Nom'].astype(str).str.strip() == str(n).strip()]
-    r_pts = {"1/8":1,"1/4":2,"1/2":3,"Finale":4}
-    b_pts = {4:4, 5:3, 6:2, 7:1}
+    r_pts, b_pts = {"1/8":1,"1/4":2,"1/2":3,"Finale":4}, {4:4, 5:3, 6:2, 7:1}
     for _, p in sub.iterrows():
-        se = str(p['Série/Équipes']).strip()
-        ch = str(p['Team Win']).strip()
-        ro = str(p['Ronde']).strip()
+        se, ch, ro = str(p['Série/Équipes']).strip(), str(p['Team Win']).strip(), str(p['Ronde']).strip()
         m = df_r[df_r['Série/Équipes'].astype(str).str.strip() == se]
         ps, ok = 0, "❌"
         if not m.empty:
@@ -118,24 +105,17 @@ if 'Nom' in df_p.columns:
     users = df_p['Nom'].dropna().unique()
     sc, det = [], {}
     for u in users:
-        p, d = calc(u)
-        sc.append({"Participant": u, "Points": p})
-        det[u] = d
-    
+        p, d = calc(u); sc.append({"Participant": u, "Points": p}); det[u] = d
     st.markdown('<h3 style="text-align:center;margin-top:20px;">📊 Classement</h3>', unsafe_allow_html=True)
     rk = pd.DataFrame(sc).sort_values("Points", ascending=False)
     rk.insert(0, "Rang", range(1, len(rk) + 1))
     st.markdown(f'<div class="table-container">{rk.to_html(index=False)}</div>', unsafe_allow_html=True)
-    
-    st.write("---")
-    with st.expander("🔍 Analyse des points"):
+    with st.expander("🔍 Détails"):
         for u in users:
-            st.subheader(f"Joueur : {u}")
-            st.write(pd.DataFrame(det[u]).to_html(index=False), unsafe_allow_html=True)
-
+            st.subheader(u); st.write(pd.DataFrame(det[u]).to_html(index=False), unsafe_allow_html=True)
     with st.expander("📋 Sélections"):
         cols = df_p.columns.tolist()
-        cn = next((c for c in cols if any(x in c.upper() for x in ["COUPE", "STANLEY"])), None)
+        cn = next((c for c in cols if "COUPE" in c.upper() or "STANLEY" in c.upper()), None)
         mn = next((c for c in cols if "MVP" in c.upper()), None)
         for u in users:
             st.markdown(f"#### **{u}**")
@@ -144,4 +124,9 @@ if 'Nom' in df_p.columns:
                 c1, c2 = st.columns(2)
                 if cn: c1.markdown(f'<div class="bonus-card">🏆 <div class="bonus-val">{r[cn].iloc[0]}</div></div>', unsafe_allow_html=True)
                 if mn: c2.markdown(f'<div class="bonus-card">🎖️ <div class="bonus-val">{r[mn].iloc[0]}</div></div>', unsafe_allow_html=True)
-            p_s = df_
+            p_s = df_pr[df_pr['Nom'].astype(str).str.strip() == str(u).strip()]
+            if not p_s.empty: st.write(p_s[['Ronde','Série/Équipes','Team Win','#Match']].to_html(index=False), unsafe_allow_html=True)
+            st.write("<hr>", unsafe_allow_html=True)
+    with st.expander("📜 Règlement"):
+        st.markdown('<div class="rules-section"><b>1. Points :</b> 1/8(1pt), 1/4(2pts), 1/2(3pts), Finale(4pts) par victoire + 2pts gagnant série.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="rules-section"><b>2. Bonus Précision :</b> Matchs pile : 4(+4), 5(+3), 6(+2), 7(+1). MVP (+10).</div>', unsafe_allow_html=True)
