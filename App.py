@@ -48,37 +48,46 @@ def get_nhl_ticker():
         url = "https://api-web.nhle.com/v1/score/now"
         data = requests.get(url, timeout=5).json()
         games = data.get('games', [])
-        if not games: return '<div class="game-card">🏒 Aucun match aujourd\'hui</div>'
+        if not games: 
+            return '<div class="game-card">🏒 Aucun match aujourd\'hui</div>'
         t_html = ""
         for g in games:
             away, home = g['awayTeam']['abbrev'], g['homeTeam']['abbrev']
             ascor, hscor = g['awayTeam'].get('score', 0), g['homeTeam'].get('score', 0)
             status, c_class, s_text = g['gameState'], "game-card", '<span class="game-status">À VENIR</span>'
             if status in ["OFF", "FINAL"]:
-                c_class += " final"; s_text = '<span class="game-status">FIN</span>'
+                c_class += " final"
+                s_text = '<span class="game-status">FIN</span>'
             elif status in ["LIVE", "CRIT"]:
-                c_class += " live"; p = g.get('periodDescriptor', {}).get('number', 1)
+                c_class += " live"
+                p = g.get('periodDescriptor', {}).get('number', 1)
                 s_text = f'<span class="game-status"><span class="live-dot"></span>P{p}</span>'
             t_html += f'<div class="{c_class}"><span class="team-name">{away}</span><span class="team-score">{ascor}</span><span style="color:#64748b;">vs</span><span class="team-score">{hscor}</span><span class="team-name">{home}</span>{s_text}</div>'
         return t_html + t_html
-    except: return '<div class="game-card">⚠️ Scores NHL indisponibles</div>'
+    except: 
+        return '<div class="game-card">⚠️ Scores NHL indisponibles</div>'
 
 st.markdown(f'<div class="nhl-ticker"><div class="ticker-content">{get_nhl_ticker()}</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
-# 4. DONNÉES
+# 4. CHARGEMENT DES DONNÉES
 SHEET_ID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
+
 def load_data(sn):
     url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
-    df = pd.read_csv(url); df.columns = df.columns.str.strip()
+    df = pd.read_csv(url)
+    df.columns = df.columns.str.strip()
     return df
 
 try:
-    df_part, df_pred, df_res = load_data("Participants"), load_data("Prédictions"), load_data("Résultats")
+    df_part = load_data("Participants")
+    df_pred = load_data("Prédictions")
+    df_res = load_data("Résultats")
     df_res['Victoires A'] = pd.to_numeric(df_res['Victoires A'], errors='coerce').fillna(0)
     df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'], errors='coerce').fillna(0)
 except Exception as e:
-    st.error(f"Erreur : {e}"); st.stop()
+    st.error(f"Erreur de lecture : {e}")
+    st.stop()
 
 # 5. CALCULS
 def calculer_tout(nom):
@@ -87,12 +96,16 @@ def calculer_tout(nom):
     pts_r = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
     bon_m = {4: 4, 5: 3, 6: 2, 7: 1}
     for _, pred in p_preds.iterrows():
-        s, c, r = str(pred['Série/Équipes']).strip(), str(pred['Team Win']).strip(), str(pred['Ronde']).strip()
+        s = str(pred['Série/Équipes']).strip()
+        c = str(pred['Team Win']).strip()
+        r = str(pred['Ronde']).strip()
         m_res = df_res[df_res['Série/Équipes'].astype(str).str.strip() == s]
         pts_s, stt = 0, "❌"
         if not m_res.empty:
             res = m_res.iloc[0]
-            v = res['Victoires A'] if c == str(res['Équipe A']).strip() else (res['Victoires B'] if c == str(res['Équipe B']).strip() else 0)
+            eqA = str(res['Équipe A']).strip()
+            eqB = str(res['Équipe B']).strip()
+            v = res['Victoires A'] if c == eqA else (res['Victoires B'] if c == eqB else 0)
             pts_s += (v * pts_r.get(r, 1))
             if str(res['Fini']).upper() == "OUI":
                 vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
@@ -100,10 +113,14 @@ def calculer_tout(nom):
                 if c == str(vr).strip():
                     pts_s += 2
                     try:
-                        if int(pred['#Match']) == mr: pts_s += bon_m.get(mr, 0)
-                    except: pass
-                elif str(pred['#Match']) == "7" and mr == 7: pts_s += 1
-            if pts_s > 0: stt = "✅"
+                        if int(pred['#Match']) == mr: 
+                            pts_s += bon_m.get(mr, 0)
+                    except: 
+                        pass
+                elif str(pred['#Match']) == "7" and mr == 7: 
+                    pts_s += 1
+            if pts_s > 0: 
+                stt = "✅"
             total += pts_s
         details.append({"Statut": stt, "Série": s, "Choix": c, "Points": int(pts_s)})
     return int(total), details
@@ -122,7 +139,8 @@ if 'Nom' in df_part.columns:
     df_rank = pd.DataFrame(scores_finaux).sort_values("Points", ascending=False)
     df_rank.insert(0, "Rang", range(1, len(df_rank) + 1))
     c1, c2, c3 = st.columns([1, 4, 1])
-    with c2: st.markdown(f'<div style="display:flex;justify-content:center;">{df_rank.to_html(index=False)}</div>', unsafe_allow_html=True)
+    with c2: 
+        st.markdown(f'<div style="display:flex;justify-content:center;">{df_rank.to_html(index=False)}</div>', unsafe_allow_html=True)
 
     st.write("---")
     with st.expander("🔍 Pourquoi ce score ? (Détails par série)"):
@@ -138,3 +156,21 @@ if 'Nom' in df_part.columns:
             st.markdown(f"### Prédictions de **{n}**")
             ur = df_part[df_part['Nom'].astype(str).str.strip() == str(n).strip()]
             if not ur.empty:
+                ca, cb = st.columns(2)
+                if cc: 
+                    ca.markdown(f'<div class="bonus-card"><span class="bonus-icon">🏆</span><div><span class="bonus-label">Stanley Cup</span><span class="bonus-value">{ur[cc].iloc[0]}</span></div></div>', unsafe_allow_html=True)
+                if cm: 
+                    cb.markdown(f'<div class="bonus-card"><span class="bonus-icon">🎖️</span><div><span class="bonus-label">MVP Choisi</span><span class="bonus-value">{ur[cm].iloc[0]}</span></div></div>', unsafe_allow_html=True)
+            p_p = df_pred[df_pred['Nom'].astype(str).str.strip() == str(n).strip()]
+            md = p_p[p_p['Série/Équipes'].notna()]
+            if not md.empty: 
+                st.write(md[['Ronde', 'Série/Équipes', 'Team Win', '#Match']].to_html(index=False), unsafe_allow_html=True)
+            st.write("<hr>", unsafe_allow_html=True)
+
+    with st.expander("📜 Règlement officiel - Pool de Hockey 2026"):
+        st.markdown("""
+        <div class="rules-section"><h4>1. Structure</h4><ul><li>Format éliminatoire. Choix Coupe Stanley et MVP fixés au départ.</li></ul></div>
+        <div class="rules-section"><h4>2. Pointage</h4><table style="width:auto;"><tr><th>Ronde</th><th>Pts/Victoire</th><th>Bonus Série</th></tr><tr><td>1/8</td><td>1</td><td>+2</td></tr><tr><td>1/4</td><td>2</td><td>+2</td></tr><tr><td>1/2</td><td>3</td><td>+2</td></tr><tr><td>Finale</td><td>4</td><td>+2</td></tr></table></div>
+        <div class="rules-section"><h4>3. Bonus Matchs</h4><ul><li>4: +4 pts | 5: +3 pts | 6: +2 pts | 7: +1 pt</li></ul><p><i>Exception Match 7 : Le +1 est donné si la série se rend en 7, peu importe le vainqueur.</i></p></div>
+        <div class="rules-section"><h4>4. Long Terme</h4><ul><li>Parcours Champion: R1(+2), R2(+2), R3(+2), Finale(+4)</li><li>MVP: +10 pts si exact.</li></ul></div>
+        """, unsafe_allow_html=True)
