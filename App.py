@@ -5,71 +5,38 @@ import requests
 from datetime import datetime
 import pytz
 
-# 1. CONFIGURATION DE LA PAGE
+# 1. CONFIGURATION
 st.set_page_config(page_title="Pool de Hockey 2026", layout="wide")
 
-# 2. DESIGN & STYLE CSS (Ticker Mobile, Tableau Compact, Centrage)
+# 2. STYLE CSS (Ticker, Tableau & Centrage)
 st.markdown("""
     <style>
-    .nhl-ticker-wrap {
-        width: 100%; overflow: hidden; background: #0b0f19;
-        border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px;
-        padding: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    }
-    .ticker { 
-        display: inline-flex; width: max-content; 
-        animation: ticker 15s linear infinite; 
-    }
-    @keyframes ticker { 
-        0% { transform: translate3d(0, 0, 0); } 
-        100% { transform: translate3d(-50%, 0, 0); } 
-    }
-    .game-card {
-        flex-shrink: 0; background: rgba(255, 255, 255, 0.05); 
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 6px; margin-right: 20px; padding: 5px 15px; 
-        display: flex; align-items: center; gap: 10px; min-width: 230px;
-    }
+    .nhl-ticker-wrap { width: 100%; overflow: hidden; background: #0b0f19; border-bottom: 2px solid #1f77b4; margin: -50px -50px 30px -50px; padding: 10px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .ticker { display: inline-flex; width: max-content; animation: ticker 15s linear infinite; }
+    @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-50%, 0, 0); } }
+    .game-card { flex-shrink: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; margin-right: 20px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; min-width: 230px; }
     .game-card.live { border-color: #ff4b4b; background: rgba(255, 75, 75, 0.1); }
     .game-card.final { border-color: #28a745; }
     .team { font-weight: 700; font-size: 0.9rem; color: #fff; width: 40px; text-align: center; }
-    .score { 
-        background: #1e293b; color: #fbbf24; font-weight: 900; 
-        padding: 2px 8px; border-radius: 4px; min-width: 25px; text-align: center; 
-    }
-    .status-badge { 
-        font-size: 0.6rem; font-weight: bold; padding: 2px 5px; 
-        border-radius: 3px; background: rgba(255,255,255,0.1); color: #94a3b8; 
-    }
-    .live-dot { 
-        height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; 
-        display: inline-block; margin-right: 5px; animation: blink 1s infinite; 
-    }
+    .score { background: #1e293b; color: #fbbf24; font-weight: 900; padding: 2px 8px; border-radius: 4px; min-width: 25px; text-align: center; }
+    .status-badge { font-size: 0.6rem; font-weight: bold; padding: 2px 5px; border-radius: 3px; background: rgba(255,255,255,0.1); color: #94a3b8; }
+    .live-dot { height: 6px; width: 6px; background: #ff4b4b; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
     @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.2;} 100% {opacity: 1;} }
-
     .main-title { text-align: center; color: #1f77b4; font-size: 2.2rem; font-weight: 800; margin-bottom: 5px; }
     .sync-time { text-align: center; color: #64748b; font-size: 0.85rem; font-style: italic; margin-bottom: 25px; }
     .sub-title { text-align: center; color: #333; margin-top: 15px; font-weight: 700; font-size: 1.4rem; margin-bottom: 20px; }
-
     .table-container { display: flex; justify-content: center; width: 100%; }
     table { width: auto !important; margin: auto; border-radius: 10px; overflow: hidden; border-collapse: collapse; }
     th { background: #1f77b4; color: white; padding: 12px 25px; text-align: center !important; }
     td { padding: 12px 25px; border-bottom: 1px solid #eee; text-align: center !important; font-weight: 600; }
-    
-    .bonus-card { 
-        background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; 
-        padding: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; 
-    }
+    .bonus-card { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
     .bonus-label { color: #64748b; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
     .bonus-value { color: #0f172a; font-size: 1.1rem; font-weight: 700; }
-    .rules-section { 
-        background: #f8fafc; padding: 15px; border-left: 4px solid #1f77b4; 
-        margin-bottom: 10px; border-radius: 4px; 
-    }
+    .rules-section { background: #f8fafc; padding: 15px; border-left: 4px solid #1f77b4; margin-bottom: 10px; border-radius: 4px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. RÉCUPÉRATION DES SCORES NHL
+# 3. SCORES NHL
 def get_nhl_ticker():
     try:
         url = "https://api-web.nhle.com/v1/score/now"
@@ -93,7 +60,7 @@ def get_nhl_ticker():
 st.markdown(f'<div class="nhl-ticker-wrap"><div class="ticker">{get_nhl_ticker()}</div></div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">🏆 Pool de Hockey 2026</div>', unsafe_allow_html=True)
 
-# 4. CHARGEMENT DES DONNÉES
+# 4. DATA LOADING
 SID = "1j4g-7V5cLo9WcHNj_T063-rD1rvUKrn11VoRi3TdXww"
 def load_data(sn):
     u = f"https://docs.google.com/spreadsheets/d/{SID}/gviz/tq?tqx=out:csv&sheet={urllib.parse.quote(sn)}"
@@ -101,17 +68,64 @@ def load_data(sn):
 
 try:
     df_part, df_pred, df_res = load_data("Participants"), load_data("Prédictions"), load_data("Résultats")
-    
-    # RÉCUPÉRATION DE LA DATE DE MODIFICATION DEPUIS L'ONGLET SYSTEM
     try:
         df_sys = load_data("System")
-        raw_date = df_sys.columns[0]
-        tz_qc = pytz.timezone('America/Montreal')
-        dt_obj = pd.to_datetime(raw_date).tz_localize('UTC').tz_convert(tz_qc)
+        dt_obj = pd.to_datetime(df_sys.columns[0]).tz_localize('UTC').tz_convert(pytz.timezone('America/Montreal'))
         last_sync = dt_obj.strftime("%d/%m/%Y à %H:%M:%S")
-    except:
-        last_sync = "En attente de modification du fichier..."
+    except: last_sync = "En attente de modification..."
+    st.markdown(f'<div class="sync-time">Dernière modification : {last_sync}</div>', unsafe_allow_html=True)
+    df_res['Victoires A'] = pd.to_numeric(df_res['Victoires A'], errors='coerce').fillna(0)
+    df_res['Victoires B'] = pd.to_numeric(df_res['Victoires B'], errors='coerce').fillna(0)
+except Exception as e:
+    st.error(f"Erreur : {e}"); st.stop()
 
-    st.markdown(f'<div class="sync-time">Dernière modification du fichier : {last_sync}</div>', unsafe_allow_html=True)
+# 5. CALCULS
+def calculer_tout(nom):
+    tot, det = 0, []
+    p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
+    pts_r, bon_m = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}, {4: 4, 5: 3, 6: 2, 7: 1}
+    for _, prd in p_preds.iterrows():
+        s, c, r = str(prd['Série/Équipes']).strip(), str(prd['Team Win']).strip(), str(prd['Ronde']).strip()
+        m_r = df_res[df_res['Série/Équipes'].astype(str).str.strip() == s]
+        pts_s, stt = 0, "❌"
+        if not m_r.empty:
+            res = m_r.iloc[0]; eA, eB = str(res['Équipe A']).strip(), str(res['Équipe B']).strip()
+            v = res['Victoires A'] if c == eA else (res['Victoires B'] if c == eB else 0)
+            pts_s += (v * pts_r.get(r, 1))
+            if str(res['Fini']).upper() == "OUI":
+                vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
+                mr = int(res['Victoires A'] + res['Victoires B'])
+                if c == str(vr).strip():
+                    pts_s += 2
+                    try: 
+                        if int(prd['#Match']) == mr: pts_s += bon_m.get(mr, 0)
+                    except: pass
+                elif str(prd['#Match']) == "7" and mr == 7: pts_s += 1
+            if pts_s > 0: stt = "✅"
+            tot += pts_s
+        det.append({"Statut": stt, "Série": s, "Choix": c, "Points": int(pts_s)})
+    return int(tot), det
 
-    df_res['Victoires A'] = pd.
+# 6. UI
+if 'Nom' in df_part.columns:
+    participants = df_part['Nom'].dropna().unique()
+    scores, details_p = [], {}
+    for n in participants:
+        p, d = calculer_tout(n); scores.append({"Participant": n, "Points": p}); details_p[n] = d
+    st.markdown('<div class="sub-title">📊 Classement Général</div>', unsafe_allow_html=True)
+    df_rank = pd.DataFrame(scores).sort_values("Points", ascending=False)
+    df_rank.insert(0, "Rang", range(1, len(df_rank) + 1))
+    st.markdown(f'<div class="table-container">{df_rank.to_html(index=False)}</div>', unsafe_allow_html=True)
+    with st.expander("🔍 Analyse des points"):
+        for n in participants:
+            st.subheader(f"Joueur : {n}"); st.write(pd.DataFrame(details_p[n]).to_html(index=False), unsafe_allow_html=True)
+    with st.expander("📋 Sélections"):
+        ac = df_part.columns.tolist()
+        cc = next((c for c in ac if any(x in c.upper() for x in ["STANLEY", "CUP", "COUPE"])), None)
+        cm = next((c for c in ac if "MVP" in c.upper()), None)
+        for n in participants:
+            st.markdown(f"### **{n}**"); ur = df_part[df_part['Nom'].astype(str).str.strip() == str(n).strip()]
+            if not ur.empty:
+                c1, c2 = st.columns(2)
+                if cc: c1.markdown(f'<div class="bonus-card">🏆 <div><div class="bonus-label">Stanley Cup</div><div class="bonus-value">{ur[cc].iloc[0]}</div></div></div>', unsafe_allow_html=True)
+                if cm: c2.markdown(f'<div class="bonus-card">🎖️ <div><div class="bonus-label">
