@@ -104,32 +104,56 @@ try:
 except Exception as e:
     st.error(f"Erreur : {e}"); st.stop()
 
-# 5. LOGIQUE DE CALCUL
+# 5. LOGIQUE DE CALCUL (CORRIGÉE)
 def calculer_tout(nom):
     tot, det = 0, []
+    # Filtrer les prédictions du joueur
     p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
     pts_r = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
     bon_m = {4: 4, 5: 3, 6: 2, 7: 1}
+    
+    # A. Points des Séries individuelles
     for _, prd in p_preds.iterrows():
         s, c, r = str(prd['Série/Équipes']).strip(), str(prd['Team Win']).strip(), str(prd['Ronde']).strip()
         m_r = df_res[df_res['Série/Équipes'].astype(str).str.strip() == s]
-        pts_s, stt = 0, "❌"
+        ps = 0
         if not m_r.empty:
-            res = m_r.iloc[0]; eA = str(res['Équipe A']).strip(); eB = str(res['Équipe B']).strip()
+            res = m_r.iloc[0]
+            eA, eB = str(res['Équipe A']).strip(), str(res['Équipe B']).strip()
             v = res['Victoires A'] if c == eA else (res['Victoires B'] if c == eB else 0)
-            pts_s += (v * pts_r.get(r, 1))
+            ps += (v * pts_r.get(r, 1))
             if str(res['Fini']).upper() == "OUI":
                 vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
                 mr = int(res['Victoires A'] + res['Victoires B'])
                 if c == str(vr).strip():
-                    pts_s += 2
+                    ps += 2
                     try:
-                        if int(prd['#Match']) == mr: pts_s += bon_m.get(mr, 0)
+                        if int(prd['#Match']) == mr: ps += bon_m.get(mr, 0)
                     except: pass
-                elif str(prd['#Match']) == "7" and mr == 7: pts_s += 1
-            if pts_s > 0: stt = "✅"
-            tot += pts_s
-        det.append({"Statut": stt, "Série": s, "Choix": c, "Points": int(pts_s)})
+                elif str(prd['#Match']) == "7" and mr == 7: ps += 1
+            tot += ps
+        det.append({"Statut": "✅" if ps > 0 else "❌", "Série": s, "Choix": c, "Points": int(ps)})
+
+    # B. Points Bonus : Parcours Champion (Depuis Participants)
+    p_row = df_part[df_part['Nom'].astype(str).str.strip() == str(nom).strip()]
+    if not p_row.empty:
+        ac = df_part.columns.tolist()
+        cc_col = next((c for c in ac if any(x in c.upper() for x in ["STANLEY", "COUPE"])), None)
+        if cc_col:
+            mon_champion = str(p_row[cc_col].iloc[0]).strip()
+            # On vérifie chaque série terminée remportée par cette équipe
+            for _, res in df_res.iterrows():
+                if str(res['Fini']).upper() == "OUI":
+                    gagnant = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
+                    if str(gagnant).strip() == mon_champion:
+                        # Trouver la ronde de cette série pour donner le bon bonus
+                        info = df_pred[df_pred['Série/Équipes'] == res['Série/Équipes']]
+                        if not info.empty:
+                            ronde = str(info['Ronde'].iloc[0]).strip()
+                            bonus = 4 if ronde == "Finale" else 2
+                            tot += bonus
+                            det.append({"Statut": "🏆", "Série": f"Parcours {ronde}", "Choix": mon_champion, "Points": bonus})
+    
     return int(tot), det
 
 # 6. INTERFACE
