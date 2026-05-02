@@ -164,6 +164,7 @@ if 'Nom' in df_part.columns:
         p, d = calculer_tout(n); scores.append({"Participant": n, "Points": p}); details_p[n] = d
     
     st.markdown('<div class="sub-title">📊 Classement Général</div>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center; margin-bottom:15px;"><span style="background:#f1f5f9; padding:5px 15px; border-radius:20px; font-size:0.85rem; color:#475569; border:1px solid #cbd5e1;">💰 <b>Positions gagnantes :</b> 🥇 1er : 100$ &nbsp;|&nbsp; 🥈 2e : 20$</span></div>', unsafe_allow_html=True)
     df_rank = pd.DataFrame(scores).sort_values("Points", ascending=False)
     df_rank.insert(0, "Rang", range(1, len(df_rank) + 1))
     # Affichage du tableau dans son conteneur centré
