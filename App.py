@@ -123,14 +123,25 @@ def calculer_tout(nom):
             v = res['Victoires A'] if c == eA else (res['Victoires B'] if c == eB else 0)
             ps += (v * pts_r.get(r, 1))
             if str(res['Fini']).upper() == "OUI":
-                vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
-                mr = int(res['Victoires A'] + res['Victoires B'])
-                if c == str(vr).strip():
-                    ps += 2
-                    try:
-                        if int(prd['#Match']) == mr: ps += bon_m.get(mr, 0)
-                    except: pass
-                elif str(prd['#Match']) == "7" and mr == 7: ps += 1
+vr = res['Équipe A'] if res['Victoires A'] > res['Victoires B'] else res['Équipe B']
+            mr = int(res['Victoires A'] + res['Victoires B'])
+            
+            # A. Calcul pour le vainqueur de la série
+            if c == str(vr).strip():
+                pts_s += 2
+                try:
+                    # On utilise float pour éviter le bug des décimales (.0)
+                    if int(float(prd['#Match'])) == mr:
+                        pts_s += bon_m.get(mr, 0)
+                except: pass
+            
+            # B. RÈGLE SPÉCIALE : Point de consolation Match 7
+            # On vérifie si c'est un match 7, peu importe qui a gagné la série
+            else:
+                try:
+                    if int(float(prd['#Match'])) == 7 and mr == 7:
+                        pts_s += 1
+                except: pass
             tot += ps
         det.append({"Statut": "✅" if ps > 0 else "❌", "Série": s, "Choix": c, "Points": int(ps)})
 
