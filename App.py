@@ -95,7 +95,7 @@ except Exception as e:
 def calculer_tout(nom):
     tot, det = 0, []
     p_preds = df_pred[df_pred['Nom'].astype(str).str.strip() == str(nom).strip()]
-    pts_r = {"1/8": 1, "1/4": 2, "1/2": 3, "Finale": 4}
+    pts_r = {"1/8": 1, "1/4": 2, "1/2": 3, "1/1": 4}
     bon_m = {4: 4, 5: 3, 6: 2, 7: 1}
     
     for _, prd in p_preds.iterrows():
